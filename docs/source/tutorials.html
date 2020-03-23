@@ -13,38 +13,40 @@
 
   
   
+  
+  
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-    <link rel="top" title="zyglrox 0.1 documentation" href="../index.html"/> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="QuantumVariationalEigensolverGradFree" href="zyglrox.models.qve.QuantumVariationalEigensolverGradFree.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
+   
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -53,7 +55,7 @@
 
           
             
-            <img src="../_static/zyglrox.png" class="logo" />
+            <img src="../_static/zyglrox.png" class="logo" alt="Logo"/>
           
           </a>
 
@@ -82,7 +84,10 @@
           
             
             
-                <p class="caption"><span class="caption-text">Getting Started</span></p>
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 </ul>
@@ -93,7 +98,7 @@
 </ul>
 <p class="caption"><span class="caption-text">Tutorials</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Beginner</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Beginner</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#getting-started">1. Getting Started</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multi-qubit-gates-and-visualization">2. Multi-Qubit gates and Visualization</a></li>
 </ul>
@@ -119,34 +124,54 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../index.html">zyglrox</a>
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">zyglrox</a>
+        
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="../index.html">Docs</a> &raquo;</li>
-      
-    <li>Beginner</li>
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Beginner</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="../_sources/source/tutorials.txt" rel="nofollow"> View page source</a>
+            
+            <a href="../_sources/source/tutorials.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -156,37 +181,37 @@
 <h1>Beginner<a class="headerlink" href="#beginner" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="getting-started">
 <h2>1. Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<p>In this tutorial we will explore the basic workflow of using <code class="docutils literal"><span class="pre">zyglrox</span></code>.
+<p>In this tutorial we will explore the basic workflow of using <code class="docutils literal notranslate"><span class="pre">zyglrox</span></code>.
 We start by defining a quantum circuit. First, we import the necessary modules:
-the <code class="docutils literal"><span class="pre">QuantumCircuit</span></code> class, two gates and the <code class="docutils literal"><span class="pre">Observable</span></code> class.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">zyglrox.core.circuit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span>
+the <code class="docutils literal notranslate"><span class="pre">QuantumCircuit</span></code> class, two gates and the <code class="docutils literal notranslate"><span class="pre">Observable</span></code> class.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">zyglrox.core.circuit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span>
 <span class="kn">from</span> <span class="nn">zyglrox.core.gates</span> <span class="kn">import</span> <span class="n">Hadamard</span><span class="p">,</span> <span class="n">PauliZ</span>
 <span class="kn">from</span> <span class="nn">zyglrox.core.observables</span> <span class="kn">import</span> <span class="n">Observable</span>
 </pre></div>
 </div>
 <p>Next, we will will construct a quantum circuit on a single qubit, where we first apply a Hadmard gate, and afterwards a Pauli Z gate.
-Specifiying the circuit is done by make a list of <code class="docutils literal"><span class="pre">Gate</span></code> objects, where for each gate we specify on which &#8216;quantum wire&#8217; they operate.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">gates</span> <span class="o">=</span> <span class="p">[</span><span class="n">Hadamard</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,]),</span> <span class="n">PauliZ</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,])]</span>
+Specifiying the circuit is done by make a list of <code class="docutils literal notranslate"><span class="pre">Gate</span></code> objects, where for each gate we specify on which ‘quantum wire’ they operate.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">gates</span> <span class="o">=</span> <span class="p">[</span><span class="n">Hadamard</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,]),</span> <span class="n">PauliZ</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,])]</span>
 <span class="n">qc</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">gates</span><span class="o">=</span><span class="n">gates</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Before we can calculate anything, we need to initialize the model in true TensorFlow fashion. If you have a CUDA enabled GPU available,
 you can choose to run the calculation on the GPU. For now, we will select the CPU to do the heavy lifting.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">qc</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">qc</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p><code class="docutils literal"><span class="pre">zyglrox</span></code> relies on <code class="docutils literal"><span class="pre">tensorflow</span> <span class="pre">1.15.0</span></code>. This Python framework uses an imperative programming paradigm to
-construct a computational graph, which is then executed in a so called &#8216;session&#8217;.</p>
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">zyglrox</span></code> relies on <code class="docutils literal notranslate"><span class="pre">tensorflow</span> <span class="pre">1.15.0</span></code>. This Python framework uses an imperative programming paradigm to
+construct a computational graph, which is then executed in a so called ‘session’.</p>
 <img alt="../_images/tut1_tf_graph.png" class="align-center" src="../_images/tut1_tf_graph.png" />
-<p class="last">Understanding and managing these graphs and sessions requires some understanding of TensorFlow. However, when using <code class="docutils literal"><span class="pre">zyglrox</span></code> you only have to worry
-about calling <code class="docutils literal"><span class="pre">qc.initalize</span></code> after all the circuit definitions are done.</p>
+<p>Understanding and managing these graphs and sessions requires some understanding of TensorFlow. However, when using <code class="docutils literal notranslate"><span class="pre">zyglrox</span></code> you only have to worry
+about calling <code class="docutils literal notranslate"><span class="pre">qc.initalize</span></code> after all the circuit definitions are done.</p>
 </div>
-<p>Now we are ready to do some calculations. <code class="docutils literal"><span class="pre">QuantumCircuit</span></code> has a method <code class="docutils literal"><span class="pre">circuit</span></code>, that can be called  on a complex vector to output
-the wavefunction after applying the gates. Additionally, <code class="docutils literal"><span class="pre">QuantumCircuit</span></code> contains a constant vector <code class="docutils literal"><span class="pre">qc.phi</span></code> corresponding to the <span class="math">\(|0\rangle^{\otimes N}\)</span>,
+<p>Now we are ready to do some calculations. <code class="docutils literal notranslate"><span class="pre">QuantumCircuit</span></code> has a method <code class="docutils literal notranslate"><span class="pre">circuit</span></code>, that can be called  on a complex vector to output
+the wavefunction after applying the gates. Additionally, <code class="docutils literal notranslate"><span class="pre">QuantumCircuit</span></code> contains a constant vector <code class="docutils literal notranslate"><span class="pre">qc.phi</span></code> corresponding to the <span class="math notranslate nohighlight">\(|0\rangle^{\otimes N}\)</span>,
 that can be propagated through the circuit. We can call the initialized session to extract the values of interest from the graph.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">phi</span> <span class="o">=</span> <span class="n">qc</span><span class="o">.</span><span class="n">circuit</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">phi</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">phi</span> <span class="o">=</span> <span class="n">qc</span><span class="o">.</span><span class="n">circuit</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">phi</span><span class="p">)</span>
 <span class="c1"># graph definitions are done</span>
 <span class="n">qc_tf</span> <span class="o">=</span> <span class="n">qc</span><span class="o">.</span><span class="n">_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">qc_tf</span><span class="p">)</span>
@@ -194,7 +219,7 @@ that can be propagated through the circuit. We can call the initialized session 
 </pre></div>
 </div>
 <p>Which outputs the correct state:</p>
-<div class="math">
+<div class="math notranslate nohighlight">
 \[\begin{split}\mathcal{U}|{0}\rangle = Z \: H |{0}\rangle \equiv
 \begin{pmatrix}
 1 &amp;  0\\
@@ -218,13 +243,13 @@ that can be propagated through the circuit. We can call the initialized session 
 <p>On a real quantum computer, we do not have access to the full wave function. Instead, we have to rely on the measurement of
 observables to obtain information about the state of the system. To simulate this, we add an observable layer to our quantum circuit.
 For instance, lets say we want to measure in the X-basis on the first qubit.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">obs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">])]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">obs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">])]</span>
 <span class="n">expval_layer</span> <span class="o">=</span> <span class="n">ExpectationValue</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This adds the <code class="docutils literal"><span class="pre">ExpectationValue</span></code> layer to the graph, a layer containing all the observables of interest measured on our quantum circuit.
-To retrieve the observable <span class="math">\(\langle \sigma^x \rangle\)</span> from the graph, we run the <code class="docutils literal"><span class="pre">ExpectationValue</span></code> layer and extract the observables.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">measurements</span> <span class="o">=</span> <span class="n">qc</span><span class="o">.</span><span class="n">_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">expval_layer</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span>
+<p>This adds the <code class="docutils literal notranslate"><span class="pre">ExpectationValue</span></code> layer to the graph, a layer containing all the observables of interest measured on our quantum circuit.
+To retrieve the observable <span class="math notranslate nohighlight">\(\langle \sigma^x \rangle\)</span> from the graph, we run the <code class="docutils literal notranslate"><span class="pre">ExpectationValue</span></code> layer and extract the observables.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">measurements</span> <span class="o">=</span> <span class="n">qc</span><span class="o">.</span><span class="n">_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">expval_layer</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span>
 <span class="k">print</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="p">[[[[</span><span class="o">-</span><span class="mf">0.99999994</span><span class="p">]]]]</span>
 </pre></div>
@@ -233,44 +258,44 @@ To retrieve the observable <span class="math">\(\langle \sigma^x \rangle\)</span
 </div>
 <div class="section" id="multi-qubit-gates-and-visualization">
 <h2>2. Multi-Qubit gates and Visualization<a class="headerlink" href="#multi-qubit-gates-and-visualization" title="Permalink to this headline">¶</a></h2>
-<p>For this tutorial we will explore the usage of multi-qubit gates and parametrizable gates. First we import the <code class="docutils literal"><span class="pre">QuantumCircuit</span></code>, some gates
-and the <code class="docutils literal"><span class="pre">Observable</span></code> class.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">zyglrox.core.circuit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span>
+<p>For this tutorial we will explore the usage of multi-qubit gates and parametrizable gates. First we import the <code class="docutils literal notranslate"><span class="pre">QuantumCircuit</span></code>, some gates
+and the <code class="docutils literal notranslate"><span class="pre">Observable</span></code> class.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">zyglrox.core.circuit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span>
 <span class="kn">from</span> <span class="nn">zyglrox.core.gates</span> <span class="kn">import</span> <span class="n">Hadamard</span><span class="p">,</span> <span class="n">Phase</span><span class="p">,</span> <span class="n">CNOT</span>
 <span class="kn">from</span> <span class="nn">zyglrox.core.observables</span> <span class="kn">import</span> <span class="n">Observable</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 </pre></div>
 </div>
-<p>Next, we will define the gates of our circuit for 2 qubits. The <code class="docutils literal"><span class="pre">Phase</span></code> gate rotates the qubit state around the z-axis of the Bloch sphere</p>
-<div class="math">
+<p>Next, we will define the gates of our circuit for 2 qubits. The <code class="docutils literal notranslate"><span class="pre">Phase</span></code> gate rotates the qubit state around the z-axis of the Bloch sphere</p>
+<div class="math notranslate nohighlight">
 \[\begin{split}R(\theta) =
 \begin{pmatrix}
 1 &amp; 0\\
 0 &amp; e^{i\theta}
 \end{pmatrix}\end{split}\]</div>
-<p>where <span class="math">\(\theta\)</span> is the so-called phase shift. When we move on to variational circuits, this variable will be adjustable. For
-now, we set this parameter to <span class="math">\(\pi/8\)</span>.</p>
+<p>where <span class="math notranslate nohighlight">\(\theta\)</span> is the so-called phase shift. When we move on to variational circuits, this variable will be adjustable. For
+now, we set this parameter to <span class="math notranslate nohighlight">\(\pi/8\)</span>.</p>
 <p>In order to make use of entanglement, we need integrate CNOT gates, since these
 gates turn a product state</p>
-<div class="math">
+<div class="math notranslate nohighlight">
 \[|\psi \rangle = (\alpha_1 |0\rangle + \beta_1 |1\rangle )\otimes(\alpha_2 |0\rangle  + \beta_2 |1\rangle )\]</div>
 <p>into a linear combination of pure states</p>
-<div class="math">
+<div class="math notranslate nohighlight">
 \[|\psi \rangle = \alpha_1 |0\rangle \otimes(\alpha_2 |0\rangle  + \beta_2 |1\rangle ) + \beta_1 |1\rangle \otimes(\beta_2 |0\rangle  + \alpha_2 |1\rangle )\]</div>
-<p>by conditionally flipping the target qubit (in this case the second qubit) if the first qubit is in the <span class="math">\(|1\rangle\)</span> state.
+<p>by conditionally flipping the target qubit (in this case the second qubit) if the first qubit is in the <span class="math notranslate nohighlight">\(|1\rangle\)</span> state.
 We will apply a single CNOT at the end of our circuit.</p>
-<p>In <code class="docutils literal"><span class="pre">zyglrox</span></code>, we define this circuit as follows</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">gates</span> <span class="o">=</span> <span class="p">[</span><span class="n">Hadamard</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]),</span> <span class="n">Phase</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">8</span><span class="p">]),</span>
+<p>In <code class="docutils literal notranslate"><span class="pre">zyglrox</span></code>, we define this circuit as follows</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">gates</span> <span class="o">=</span> <span class="p">[</span><span class="n">Hadamard</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]),</span> <span class="n">Phase</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">8</span><span class="p">]),</span>
          <span class="n">Hadamard</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">]),</span> <span class="n">Phase</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">8</span><span class="p">]),</span> <span class="n">CNOT</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])]</span>
 </pre></div>
 </div>
-<p>To enable visualization in TensorBoard, we pass the <code class="docutils literal"><span class="pre">tensorboard=True</span></code> argument to the <code class="docutils literal"><span class="pre">QuantumCircuit</span></code> constructor.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">qc</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">gates</span><span class="o">=</span><span class="n">gates</span><span class="p">,</span><span class="n">tensorboard</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<p>To enable visualization in TensorBoard, we pass the <code class="docutils literal notranslate"><span class="pre">tensorboard=True</span></code> argument to the <code class="docutils literal notranslate"><span class="pre">QuantumCircuit</span></code> constructor.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">qc</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">gates</span><span class="o">=</span><span class="n">gates</span><span class="p">,</span><span class="n">tensorboard</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Since the <code class="docutils literal"><span class="pre">qc.circuit</span></code> method is a sequential Keras model, we can call the <code class="docutils literal"><span class="pre">summary()</span></code> function on this object to print
+<p>Since the <code class="docutils literal notranslate"><span class="pre">qc.circuit</span></code> method is a sequential Keras model, we can call the <code class="docutils literal notranslate"><span class="pre">summary()</span></code> function on this object to print
 the parameters and layers of this circuit.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">phi</span> <span class="o">=</span> <span class="n">qc</span><span class="o">.</span><span class="n">circuit</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">phi</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">phi</span> <span class="o">=</span> <span class="n">qc</span><span class="o">.</span><span class="n">circuit</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">phi</span><span class="p">)</span>
 <span class="n">qc</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Model</span><span class="p">:</span> <span class="s2">&quot;circuit&quot;</span>
 <span class="n">_________________________________________________________________</span>
@@ -294,19 +319,19 @@ the parameters and layers of this circuit.</p>
 </pre></div>
 </div>
 <div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Printing out the commonly used quantum circuit representation of wires and blocks of gates will be added in a future release.</p>
+<p class="admonition-title">Note</p>
+<p>Printing out the commonly used quantum circuit representation of wires and blocks of gates will be added in a future release.</p>
 </div>
-<p>In <code class="docutils literal"><span class="pre">zyglrox</span></code>, we are not limited by the physical constraints of a quantum computer. We can extract multiple
+<p>In <code class="docutils literal notranslate"><span class="pre">zyglrox</span></code>, we are not limited by the physical constraints of a quantum computer. We can extract multiple
 observables in parallel, even from the same qubit.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">obs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]),</span> <span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">]),</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">obs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]),</span> <span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">]),</span>
         <span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]),</span> <span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">]),</span>
         <span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]),</span> <span class="n">Observable</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">])]</span>
 <span class="n">expval_layer</span> <span class="o">=</span> <span class="n">ExpectationValue</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Now that we&#8217;re done, we initialize the session and extract the measurements.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">qc</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<p>Now that we’re done, we initialize the session and extract the measurements.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">qc</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
 <span class="n">measurements</span> <span class="o">=</span> <span class="n">qc</span><span class="o">.</span><span class="n">_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">expval_layer</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span>
 <span class="k">print</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="p">[[[[</span> <span class="mf">8.5355318e-01</span><span class="p">]]</span>
@@ -318,7 +343,7 @@ observables in parallel, even from the same qubit.</p>
 </pre></div>
 </div>
 <p>Additionally, we can visualize the computational graph in TensorBoard. When enabled, the logs are automatically stored in the <em>./logdir</em> folder.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt;&gt;&gt; tensorboard --logdir<span class="o">=</span>logdir
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; tensorboard --logdir<span class="o">=</span>logdir
 </pre></div>
 </div>
 <p>which looks like <a href="../_static/png/tut2_tensorboard.png" target="_blank"> this.
@@ -348,19 +373,27 @@ observables in parallel, even from the same qubit.</p>
 
 
            </div>
+           
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="zyglrox.models.qve.QuantumVariationalEigensolverGradFree.html" class="btn btn-neutral float-left" title="QuantumVariationalEigensolverGradFree" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Roeland Wiersema.
+        &copy; Copyright 2019, Roeland Wiersema
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -373,36 +406,15 @@ observables in parallel, even from the same qubit.</p>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'0.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>

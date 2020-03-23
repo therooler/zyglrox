@@ -13,38 +13,41 @@
 
   
   
+  
+  
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-    <link rel="top" title="zyglrox 0.1 documentation" href="../index.html"/> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="QuantumVariationalEigensolver" href="zyglrox.models.qve.QuantumVariationalEigensolver.html" />
+    <link rel="prev" title="hamiltonians.J1J2" href="zyglrox.core.hamiltonians.J1J2.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
+   
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -53,7 +56,7 @@
 
           
             
-            <img src="../_static/zyglrox.png" class="logo" />
+            <img src="../_static/zyglrox.png" class="logo" alt="Logo"/>
           
           </a>
 
@@ -82,16 +85,21 @@
           
             
             
-                <p class="caption"><span class="caption-text">Getting Started</span></p>
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 </ul>
 <p class="caption"><span class="caption-text">zyglrox</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="core.html">Core</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Models</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#quantum-boltzmann-machine">Quantum Boltzmann Machine</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#quantum-variational-eigensolver">Quantum Variational Eigensolver</a><ul class="simple">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.models.qbm">Quantum Boltzmann Machine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quantum-variational-eigensolver">Quantum Variational Eigensolver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="zyglrox.models.qve.QuantumVariationalEigensolver.html">QuantumVariationalEigensolver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="zyglrox.models.qve.QuantumVariationalEigensolverGradFree.html">QuantumVariationalEigensolverGradFree</a></li>
 </ul>
 </li>
 </ul>
@@ -113,34 +121,54 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../index.html">zyglrox</a>
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">zyglrox</a>
+        
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="../index.html">Docs</a> &raquo;</li>
-      
-    <li>Models</li>
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Models</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="../_sources/source/models.txt" rel="nofollow"> View page source</a>
+            
+            <a href="../_sources/source/models.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -148,23 +176,107 @@
             
   <div class="section" id="models">
 <h1>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="quantum-boltzmann-machine">
-<h2>Quantum Boltzmann Machine<a class="headerlink" href="#quantum-boltzmann-machine" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-zyglrox.models.qbm">
+<span id="quantum-boltzmann-machine"></span><h2>Quantum Boltzmann Machine<a class="headerlink" href="#module-zyglrox.models.qbm" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="zyglrox.models.qbm.QuantumBoltzmannMachine">
+<em class="property">class </em><code class="sig-prename descclassname">zyglrox.models.qbm.</code><code class="sig-name descname">QuantumBoltzmannMachine</code><span class="sig-paren">(</span><em class="sig-param">nqubits: int</em>, <em class="sig-param">qc: zyglrox.core.circuit.QuantumCircuit</em>, <em class="sig-param">pdf: numpy.ndarray</em>, <em class="sig-param">hamiltonian</em>, <em class="sig-param">optimizer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.models.qbm.QuantumBoltzmannMachine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Quantum Boltzmann Machine according to <a class="reference external" href="https://arxiv.org/abs/1803.11278">Kappen (2019)</a></p>
+<p>Initialize</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>nqubits (int):</dt><dd><p>The number of qubits in the system.</p>
+</dd>
+<dt>qc (QuantumCircuit):</dt><dd><p>Parametrized quantum circuit for <span class="math notranslate nohighlight">\(N\)</span> spins.</p>
+</dd>
+<dt>pdf (np.ndarray):</dt><dd><p>array containing the target distribution <span class="math notranslate nohighlight">\(q(x)\)</span>.</p>
+</dd>
+<dt>optimizer (tf.optimizer.Optimizer):</dt><dd><p>Tensorflow optimizer.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (inplace):</dt><dd><p>None</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="zyglrox.models.qbm.QuantumBoltzmannMachine.train">
+<code class="sig-name descname">train</code><span class="sig-paren">(</span><em class="sig-param">eta_qbm=0.001</em>, <em class="sig-param">tol_qbm=0.0001</em>, <em class="sig-param">tol_qve=1e-08</em>, <em class="sig-param">epochs_qbm=100</em>, <em class="sig-param">epochs_qve=1500</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.models.qbm.QuantumBoltzmannMachine.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train the quantum Boltzmann machine. We minimize the value of the gradient <span class="math notranslate nohighlight">\(\frac{1}{M}\sum_i^M |\nabla_{\theta_i} \mathcal{L}(\theta)|\)</span>
+as defined above</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>eta_qbm (float):</dt><dd><p>Learning rate for the <code class="docutils literal notranslate"><span class="pre">QuantumBoltzmannMachine</span></code>.</p>
+</dd>
+<dt>tol_qbm (float):</dt><dd><p>Tolerance <span class="math notranslate nohighlight">\(\epsilon_{qbm}\)</span> on the mean squared error of the statistics. If the absolute difference between iterations
+is smaller than this value, training stops. <code class="docutils literal notranslate"><span class="pre">QuantumBoltzmannMachine</span></code>.</p>
+</dd>
+<dt>tol_qve (float):</dt><dd><p>Tolerance <span class="math notranslate nohighlight">\(\epsilon_{qve}\)</span> on the energy. If the absolute difference between iterations is smaller than this value, training stops.</p>
+</dd>
+<dt>epochs_qbm (int):</dt><dd><p>Number of max iterations for the training algorithm of the <code class="docutils literal notranslate"><span class="pre">QuantumBoltzmannMachine</span></code>.</p>
+</dd>
+<dt>epochs_qve (int):</dt><dd><p>Number of max iterations for the training algorithm <code class="docutils literal notranslate"><span class="pre">QuantumVariationalEigensolver</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (inplace):</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="zyglrox.models.qbm.QuantumBoltzmannMachine.plot">
+<code class="sig-name descname">plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.models.qbm.QuantumBoltzmannMachine.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the convergence of the <code class="docutils literal notranslate"><span class="pre">QuantumBoltzmannMachine</span></code> learning step. Convergence is obtained when
+<span class="math notranslate nohighlight">\(\frac{1}{M}\sum_i^M |\nabla_{\theta_i} \mathcal{L}(\theta)|&lt;\epsilon_{qbm}\)</span>, where <span class="math notranslate nohighlight">\(\epsilon_{qbm}\)</span> is the tolerance
+defined when calling the <code class="docutils literal notranslate"><span class="pre">train</span></code> method.</p>
+<dl class="simple">
+<dt>Returns (inplace):</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="zyglrox.models.qbm.QuantumBoltzmannMachine.get_statistics">
+<code class="sig-name descname">get_statistics</code><span class="sig-paren">(</span><em class="sig-param">plot=True</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.models.qbm.QuantumBoltzmannMachine.get_statistics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compare the statistics of learned <code class="docutils literal notranslate"><span class="pre">QuantumBoltzmannMachine</span></code> with the target ground state statistics.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\text{MSE}_{h} = \frac{1}{M} \sum_i^M (\langle \sigma_i \rangle - \langle \hat{\sigma}_i \rangle)^2 \\
+\text{MSE}_{w} = \frac{1}{M} \sum_{i,j}^M (\langle \sigma_i \sigma_j  \rangle - \langle \hat{\sigma}_i \hat{\sigma}_j\rangle)^2\end{split}\]</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>We do not for sure know if the <code class="docutils literal notranslate"><span class="pre">QuantumVariatonalEigensolver</span></code> was succesful in obtaining the ground state of the model
+QBM hamiltonian unless we compare it with the exact ground state first.</p>
+</div>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>plot (bool):</dt><dd><p>Whether to plot the training schedule.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (dict):</dt><dd><p>Dict with entries ‘field’ and ‘coupling’ with the respective MSE between the circuit and true statistics.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="quantum-variational-eigensolver">
 <h2>Quantum Variational Eigensolver<a class="headerlink" href="#quantum-variational-eigensolver" title="Permalink to this headline">¶</a></h2>
 <p>We have both a Gradient-based and Derivative-free Quantum Variational Eigensolver.</p>
-<table border="1" class="longtable docutils">
+<table class="longtable docutils align-default">
 <colgroup>
-<col width="10%" />
-<col width="90%" />
+<col style="width: 10%" />
+<col style="width: 90%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">qve.QuantumVariationalEigensolver</span></code></td>
-<td></td>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="zyglrox.models.qve.QuantumVariationalEigensolver.html#zyglrox.models.qve.QuantumVariationalEigensolver" title="zyglrox.models.qve.QuantumVariationalEigensolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qve.QuantumVariationalEigensolver</span></code></a>(…[, …])</p></td>
+<td><p>Quantum Variational Eigensolver according to  <a class="reference external" href="https://arxiv.org/abs/1304.3061">Peruzzo et al.(2014)</a> with gradient based optimization..</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">qve.QuantumVariationalEigensolverGradFree</span></code></td>
-<td></td>
+<tr class="row-even"><td><p><a class="reference internal" href="zyglrox.models.qve.QuantumVariationalEigensolverGradFree.html#zyglrox.models.qve.QuantumVariationalEigensolverGradFree" title="zyglrox.models.qve.QuantumVariationalEigensolverGradFree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qve.QuantumVariationalEigensolverGradFree</span></code></a>(…)</p></td>
+<td><p><p>Quantum Variational Eigensolver according to  <a class="reference external" href="https://arxiv.org/abs/1304.3061">Peruzzo et al.(2014)</a> using only gradient free optimizers..</p>
+</p></td>
 </tr>
 </tbody>
 </table>
@@ -173,19 +285,29 @@
 
 
            </div>
+           
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="zyglrox.models.qve.QuantumVariationalEigensolver.html" class="btn btn-neutral float-right" title="QuantumVariationalEigensolver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="zyglrox.core.hamiltonians.J1J2.html" class="btn btn-neutral float-left" title="hamiltonians.J1J2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Roeland Wiersema.
+        &copy; Copyright 2019, Roeland Wiersema
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -198,36 +320,15 @@
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'0.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>

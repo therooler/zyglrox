@@ -143,7 +143,7 @@ html_theme_options = {'logo_only': True}
 html_logo = '_static/png/zyglrox.png'
 logo_only = True
 # The name of an image file (relative to this directory) to use as a favicon of
-# the _docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# the docsrc.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
 #html_favicon = None
 

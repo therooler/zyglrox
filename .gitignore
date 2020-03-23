@@ -9,7 +9,7 @@ literature
 *.pdf
 legacy
 **/data
-docs/_static/svg/
+docsrc/_static/svg/
 /build/
 cuda.env
 /tfcheckpoints/

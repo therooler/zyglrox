@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-#TODO: Add page to docs as url and make separate email adress
+#TODO: Add page to docsrc as url and make separate email adress
 setup(name='zyglrox',
       version='0.1.0',
       description='Zyglrox: A TensorFlow-based Quantum Computing Package',
