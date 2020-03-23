@@ -1,0 +1,985 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Core &mdash; zyglrox 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="zyglrox 0.1 documentation" href="../index.html"/>
+        <link rel="next" title="gates.CNOT" href="zyglrox.core.gates.CNOT.html"/>
+        <link rel="prev" title="Installation" href="installation.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/zyglrox.png" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">zyglrox</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Core</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#circuit">Circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gates">Gates</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gate-templates">Gate Templates</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.CNOT.html">gates.CNOT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.Hadamard.html">gates.Hadamard</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.PauliX.html">gates.PauliX</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.PauliY.html">gates.PauliY</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.PauliZ.html">gates.PauliZ</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.RX.html">gates.RX</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.RY.html">gates.RY</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.RZ.html">gates.RZ</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.R3.html">gates.R3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.CRX.html">gates.CRX</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.CRY.html">gates.CRY</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.CRZ.html">gates.CRZ</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.CR3.html">gates.CR3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.CZ.html">gates.CZ</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.Phase.html">gates.Phase</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.XX.html">gates.XX</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.YY.html">gates.YY</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.ZZ.html">gates.ZZ</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.Swap.html">gates.Swap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.Toffoli.html">gates.Toffoli</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#observables">Observables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hamiltonians">Hamiltonians</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hamiltonian-templates">Hamiltonian Templates</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.core.circuit_templates">Circuit Templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.core.topologies">Topologies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.core.edge_coloring">Edge Coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.core.utils">Utils</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Beginner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html#intermediate">Intermediate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html#advanced">Advanced</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">zyglrox</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>Core</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/source/core.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="core">
+<h1>Core<a class="headerlink" href="#core" title="Permalink to this headline">¶</a></h1>
+<p>The core module contains the most important code parts used in <code class="docutils literal"><span class="pre">zyglrox</span></code></p>
+<div class="section" id="circuit">
+<h2>Circuit<a class="headerlink" href="#circuit" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">Circuit</span></code> class contains all functionality for constructing quantum circuits and calculating observables. The circuit
+is defined by passing a list of <code class="docutils literal"><span class="pre">Gate</span></code> objects to the constructor. The combination of <span class="math">\(M\)</span> quantum gates is equal to a single unitary operation</p>
+<div class="math">
+\[\mathcal{U} \equiv \prod_i^M \mathcal{U}_i\]</div>
+<p>Our quantum computer then calculates the state</p>
+<div class="math">
+\[|\psi\rangle = \mathcal{U} |0\rangle\]</div>
+<p>If the gates <span class="math">\(\mathcal{U}_i\)</span> are paramterized by some parameter <span class="math">\(\theta_i\)</span>, so <span class="math">\(\mathcal{U}_i\to\mathcal{U}_i(\theta_i)\)</span>,
+we have what is called a variational quantum circuit</p>
+<div class="math">
+\[|\psi(\theta)\rangle = \mathcal{U}(\theta) |0\rangle\]</div>
+<p>These variational quantum circuits are essential for algorithms such as the Quantum Variational Eigensolver, the Quantum Boltzmann Machine or Quantum Approximate Adiabatic Optimization.
+For more information on the available gates in <code class="docutils literal"><span class="pre">zyglrox</span></code>, see the section
+about <a class="reference internal" href="#gates-section"><span>Gates</span></a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This class inherits from the <code class="docutils literal"><span class="pre">tf.keras.models.Model</span></code> class, and can thus be accessed in a similar fashion as other Keras
+Models. This allows for easy integration of your variational quantum circuit with the deep learning tools available in TensorFlow and Keras.</p>
+</div>
+<dl class="class">
+<dt id="zyglrox.core.circuit.QuantumCircuit">
+<em class="property">class </em><code class="descclassname">zyglrox.core.circuit.</code><code class="descname">QuantumCircuit</code><span class="sig-paren">(</span><em>tf.keras.models.Model</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit.QuantumCircuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Quantum Circuit TensorFlow Interface</p>
+<p>This class is an interface to build quantum circuits using TensorFlow. On initialization, the graph for the circuit is constructed.
+The circuit is defined by passing a list of <code class="docutils literal"><span class="pre">Gate</span></code> objects, and setting the measurement of observables through the method <code class="docutils literal"><span class="pre">set_expval</span></code>.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first docutils">
+<dt><em>nqubits (int)</em>:</dt>
+<dd>Number of qubits.</dd>
+<dt><em>gates (list)</em>:</dt>
+<dd>List of <code class="docutils literal"><span class="pre">Gate</span></code> objects.</dd>
+<dt><em>tensorboard (bool)</em>:</dt>
+<dd>Boolean that indicates whether we store the store meta data for tensorboard. Default false.</dd>
+</dl>
+<table class="last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Keyword Arguments:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><dl class="first last docutils">
+<dt><em>batch_size (int)</em>:</dt>
+<dd><p class="first last">Number of parallel iterations for map_fn when using batches of parammeters.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd>
+<dt>Returns (inplace):</dt>
+<dd>None</dd>
+</dl>
+<dl class="method">
+<dt id="zyglrox.core.circuit.QuantumCircuit.build_graph">
+<code class="descname">build_graph</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit.QuantumCircuit.build_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build the computational graph of the quantum circuit.</p>
+<dl class="docutils">
+<dt>Returns (inplace):</dt>
+<dd>None</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="zyglrox.core.circuit.QuantumCircuit.initialize">
+<code class="descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &rarr; None<a class="headerlink" href="#zyglrox.core.circuit.QuantumCircuit.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize session, variables, and the Tensorboard writer.</p>
+<p>Args:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><em>device</em> (string):</dt>
+<dd>Device of choice for running tensorflow.</dd>
+</dl>
+</div></blockquote>
+<dl class="docutils">
+<dt>Returns (inplace):</dt>
+<dd>None</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="zyglrox.core.circuit.QuantumCircuit.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &rarr; tensorflow.python.framework.ops.Tensor<a class="headerlink" href="#zyglrox.core.circuit.QuantumCircuit.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exectute the circuit, starting from the initial zero state <span class="math">\(|0\rangle^{\otimes N}\)</span> .</p>
+<p>Returns (Tensor):</p>
+<blockquote>
+<div>Circuit output, a wave function of shape (None, 2,...,2).</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="zyglrox.core.circuit.QuantumCircuit.call">
+<code class="descname">call</code><span class="sig-paren">(</span><em>inputs</em>, <em>training=False</em><span class="sig-paren">)</span> &rarr; tensorflow.python.framework.ops.Tensor<a class="headerlink" href="#zyglrox.core.circuit.QuantumCircuit.call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the circuit for a given wave function or batch of wave functions</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>inputs (Tensor)</em>:</dt>
+<dd>Input tensor corresponding to the wave function of shape (None, 2,...,2).
+In the case of a single wave function we get a shape (1,2,...,2)</dd>
+<dt><em>training (Bool)</em>:</dt>
+<dd>Indicates whether to run the circuit in training mode or inference mode.</dd>
+</dl>
+</dd>
+</dl>
+<p>Returns (Tensor):</p>
+<blockquote>
+<div>Circuit output, a wave function of shape (None, 2,...,2).</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="zyglrox.core.circuit.QuantumCircuit.set_parameters">
+<code class="descname">set_parameters</code><span class="sig-paren">(</span><em>theta</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit.QuantumCircuit.set_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the parameters of the quantum circuit by an external input. Also works for batches of parameters
+if the QuantumCircuit has been initialized with batch_params=True.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>theta (tensor)</em>:</dt>
+<dd>Parameters to be fed into the circuit, either of dimension (1, nparams, 1) or (None,nparams,1) where
+nparams is the total number of parameters in the circuit.</dd>
+</dl>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="gates">
+<span id="gates-section"></span><h2>Gates<a class="headerlink" href="#gates" title="Permalink to this headline">¶</a></h2>
+<p>A quantum gate acting <span class="math">\(\mathcal{U}\)</span> on a single qubit <span class="math">\(i\)</span>, acts on full the tensor subspace of the <span class="math">\(N\)</span>-qubit state vector.
+To perform this calculation, we can calculate the tensor representation of this operation on the full state space as follows:</p>
+<div class="math">
+\[\mathcal{U}_N = \otimes^{i-1}_{j=0} I \otimes \mathcal{U} \otimes^{N}_{j=i+1} I\]</div>
+<p>However, this provides a lot of overhead, since for every gate we need to calculate and store a <span class="math">\(2^N\times2^N\)</span> matrix.</p>
+<p>A more efficient method is to only let the quantum gate act on the relevant tensor subspace. Throughout <code class="docutils literal"><span class="pre">zyglrox</span></code>,
+the wave function <span class="math">\(|\psi\rangle^{\otimes N}\)</span> is stored as a tensor of shape <span class="math">\((2,2,\ldots,2)\)</span>. The gate operation can
+then be performed as:</p>
+<div class="math">
+\[|\hat{\psi}\rangle = \otimes^{i-1}_{j=0} |\psi_j\rangle \otimes \mathcal{U} |\psi_i\rangle \otimes^{N}_{j=i+1} |\psi_j\rangle\]</div>
+<p>Which can be implemented in <code class="docutils literal"><span class="pre">tensorflow</span></code> in the following way:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">phi_hat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span>
+                       <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">wires</span><span class="p">]</span>
+                       <span class="p">)</span>
+<span class="c1"># tensordot sets the contracted axes first, so we need to reshuffle them</span>
+<span class="n">unused_idxs</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_qubits</span><span class="p">)</span> <span class="k">if</span> <span class="n">idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wires</span><span class="p">]</span>
+<span class="n">perm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wires</span> <span class="o">+</span> <span class="n">unused_idxs</span>
+<span class="n">inv_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">perm</span><span class="p">)</span>
+<span class="n">tf</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">perm</span><span class="o">=</span><span class="n">inv_perm</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="zyglrox.core.gates.Gate">
+<em class="property">class </em><code class="descclassname">zyglrox.core.gates.</code><code class="descname">Gate</code><span class="sig-paren">(</span><em>nparams: int</em>, <em>wires: typing.List</em>, <em>value: typing.List=None</em>, <em>name=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.gates.Gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract Quantum Gate class</p>
+<p>The <code class="docutils literal"><span class="pre">Gate</span></code> class performs unitary quantum gates on the tensor subspace of a wave function</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first docutils">
+<dt><em>nparams (int)</em>:</dt>
+<dd>Number of parameters of gate.</dd>
+<dt><em>wires (list)</em>:</dt>
+<dd>List of numbers on which the gate is acting.</dd>
+<dt><em>value (None of ndarray)</em>:</dt>
+<dd>Intial value of parameterized gate in 1D numpy array. When combined with setting <code class="docutils literal"><span class="pre">trainable=False</span></code>, this
+will create a static gate that cannot be altered during any optimization.</dd>
+<dt><em>name (str)</em>:</dt>
+<dd>Name of the gate.</dd>
+</dl>
+<table class="last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Keyword Arguments:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><dl class="first last docutils">
+<dt><em>trainable (bool)</em>:</dt>
+<dd><p class="first last">Boolean that indicates whether the paramaters of this gate are trainable.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd>
+<dt>Returns (inplace):</dt>
+<dd>None</dd>
+</dl>
+<dl class="method">
+<dt id="zyglrox.core.gates.Gate.build">
+<code class="descname">build</code><span class="sig-paren">(</span><em>input_shape</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.gates.Gate.build" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called once from <cite>__call__</cite>, when we know the shapes of inputs and <cite>dtype</cite>.
+Should initialize the trainable variables, and call the super&#8217;s <cite>build()</cite>.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>input_shape (list)</em>:</dt>
+<dd>Input shapes of the incoming tensor.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="zyglrox.core.gates.Gate.call">
+<code class="descname">call</code><span class="sig-paren">(</span><em>inputs: tensorflow.python.framework.ops.Tensor</em>, <em>**kwargs</em><span class="sig-paren">)</span> &rarr; tensorflow.python.framework.ops.Tensor<a class="headerlink" href="#zyglrox.core.gates.Gate.call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gate Logic goes here.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zyglrox.core.gates.Gate.set_external_input">
+<code class="descname">set_external_input</code><span class="sig-paren">(</span><em>external_input: tensorflow.python.framework.ops.Tensor</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.gates.Gate.set_external_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect an external tensor to the gate parameters. Tensor must have shape (nparams, 1).
+This function enables the construction of hybrid architectures by having the parameters of the circuit be fed
+from some external model.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>external_input (Tensor)</em>:</dt>
+<dd>Tensor of shape (nparams, 1) with gate parameters.</dd>
+</dl>
+</dd>
+<dt>Returns (inplace):</dt>
+<dd>None</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="gate-templates">
+<h3>Gate Templates<a class="headerlink" href="#gate-templates" title="Permalink to this headline">¶</a></h3>
+<p>Below is a table of the most commonly used quantum gates that are already implemented in <code class="docutils literal"><span class="pre">zyglrox</span></code>.</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.CNOT.html#zyglrox.core.gates.CNOT" title="zyglrox.core.gates.CNOT"><code class="xref py py-obj docutils literal"><span class="pre">gates.CNOT</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements the CNOT unitary operation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.Hadamard.html#zyglrox.core.gates.Hadamard" title="zyglrox.core.gates.Hadamard"><code class="xref py py-obj docutils literal"><span class="pre">gates.Hadamard</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements the Hadamard unitary operation.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.PauliX.html#zyglrox.core.gates.PauliX" title="zyglrox.core.gates.PauliX"><code class="xref py py-obj docutils literal"><span class="pre">gates.PauliX</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements the Pauli X unitary operation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.PauliY.html#zyglrox.core.gates.PauliY" title="zyglrox.core.gates.PauliY"><code class="xref py py-obj docutils literal"><span class="pre">gates.PauliY</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements the Pauli Y unitary operation.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.PauliZ.html#zyglrox.core.gates.PauliZ" title="zyglrox.core.gates.PauliZ"><code class="xref py py-obj docutils literal"><span class="pre">gates.PauliZ</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements the Pauli Z unitary operation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.RX.html#zyglrox.core.gates.RX" title="zyglrox.core.gates.RX"><code class="xref py py-obj docutils literal"><span class="pre">gates.RX</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a rotation around the spin x-axis.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.RY.html#zyglrox.core.gates.RY" title="zyglrox.core.gates.RY"><code class="xref py py-obj docutils literal"><span class="pre">gates.RY</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a rotation around the spin y-axis.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.RZ.html#zyglrox.core.gates.RZ" title="zyglrox.core.gates.RZ"><code class="xref py py-obj docutils literal"><span class="pre">gates.RZ</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a rotation around the spin z-axis.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.R3.html#zyglrox.core.gates.R3" title="zyglrox.core.gates.R3"><code class="xref py py-obj docutils literal"><span class="pre">gates.R3</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a rotation around an arbitrary spin axis.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.CRX.html#zyglrox.core.gates.CRX" title="zyglrox.core.gates.CRX"><code class="xref py py-obj docutils literal"><span class="pre">gates.CRX</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a conditional rotation around the spin x-axis.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.CRY.html#zyglrox.core.gates.CRY" title="zyglrox.core.gates.CRY"><code class="xref py py-obj docutils literal"><span class="pre">gates.CRY</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a conditional rotation around the spin y-axis.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.CRZ.html#zyglrox.core.gates.CRZ" title="zyglrox.core.gates.CRZ"><code class="xref py py-obj docutils literal"><span class="pre">gates.CRZ</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a conditional rotation around the spin z-axis.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.CR3.html#zyglrox.core.gates.CR3" title="zyglrox.core.gates.CR3"><code class="xref py py-obj docutils literal"><span class="pre">gates.CR3</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a conditional rotation around an arbitrary spin axis.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.CZ.html#zyglrox.core.gates.CZ" title="zyglrox.core.gates.CZ"><code class="xref py py-obj docutils literal"><span class="pre">gates.CZ</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements the CZ unitary operation.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.Phase.html#zyglrox.core.gates.Phase" title="zyglrox.core.gates.Phase"><code class="xref py py-obj docutils literal"><span class="pre">gates.Phase</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a phase rotation</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.XX.html#zyglrox.core.gates.XX" title="zyglrox.core.gates.XX"><code class="xref py py-obj docutils literal"><span class="pre">gates.XX</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a conditional rotation Ising XX spin interaction.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.YY.html#zyglrox.core.gates.YY" title="zyglrox.core.gates.YY"><code class="xref py py-obj docutils literal"><span class="pre">gates.YY</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a conditional rotation Ising YY spin interaction.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.ZZ.html#zyglrox.core.gates.ZZ" title="zyglrox.core.gates.ZZ"><code class="xref py py-obj docutils literal"><span class="pre">gates.ZZ</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a conditional rotation Ising ZZ spin interaction.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="zyglrox.core.gates.Swap.html#zyglrox.core.gates.Swap" title="zyglrox.core.gates.Swap"><code class="xref py py-obj docutils literal"><span class="pre">gates.Swap</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements the SWAP unitary operation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="zyglrox.core.gates.Toffoli.html#zyglrox.core.gates.Toffoli" title="zyglrox.core.gates.Toffoli"><code class="xref py py-obj docutils literal"><span class="pre">gates.Toffoli</span></code></a>(wires:&nbsp;typing.List,&nbsp;...[,&nbsp;...])</td>
+<td>Gate that implements a controlled-controlled flip by applying the Toffoli gate.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="observables">
+<h2>Observables<a class="headerlink" href="#observables" title="Permalink to this headline">¶</a></h2>
+<p>We can calculate observables <span class="math">\(\mathcal{O}\)</span> in a similar fashion as quantum gates.
+By letting the observable of interest work on the required tensor subspace, we can efficiently obtain the corresponding expectation value.</p>
+<div class="math">
+\[\langle \psi| \mathcal{O} |\psi \rangle = \langle \psi |\hat{\psi}\rangle\]</div>
+<p>where <span class="math">\(|\hat{\psi}\rangle\)</span> is calculated as in the section about <a class="reference internal" href="#gates-section"><span>Gates</span></a></p>
+</div>
+<div class="section" id="hamiltonians">
+<h2>Hamiltonians<a class="headerlink" href="#hamiltonians" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="hamiltonian-templates">
+<h3>Hamiltonian Templates<a class="headerlink" href="#hamiltonian-templates" title="Permalink to this headline">¶</a></h3>
+<p>Below is a table of the most commonly used quantum gates that are already implemented in <code class="docutils literal"><span class="pre">zyglrox</span></code>.</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">hamiltonians.TFI</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">hamiltonians.HeisenbergXXX</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">hamiltonians.HeisenbergXXZ</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">hamiltonians.HeisenbergXYZ</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">hamiltonians.RandomFullyConnectedXYZ</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">hamiltonians.J1J2</span></code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="module-zyglrox.core.circuit_templates">
+<span id="circuit-templates"></span><h2>Circuit Templates<a class="headerlink" href="#module-zyglrox.core.circuit_templates" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="zyglrox.core.circuit_templates.staircase_cnot">
+<code class="descclassname">zyglrox.core.circuit_templates.</code><code class="descname">staircase_cnot</code><span class="sig-paren">(</span><em>N: int</em>, <em>mod=True</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.staircase_cnot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Circuit architecture where <span class="math">\(N\)</span> CNOTs are applied to qubit <span class="math">\(i\)</span> with target <span class="math">\((i+1)\text{mod} (N)\)</span></p>
+<p>#TODO: insert figure of circuit</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>N (int)</em>:</dt>
+<dd>Number of qubits</dd>
+</dl>
+</dd>
+<dt>Returns (list):</dt>
+<dd>List of <code class="docutils literal"><span class="pre">Gate</span></code> objects.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.circuit_templates.target_staircase_cnot">
+<code class="descclassname">zyglrox.core.circuit_templates.</code><code class="descname">target_staircase_cnot</code><span class="sig-paren">(</span><em>N: int</em>, <em>target: int</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.target_staircase_cnot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Circuit architecture where <span class="math">\(N-1\)</span> CNOTs are applied, all with the same target qubit.</p>
+<p>#TODO: insert figure of circuit</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>N (int)</em>:</dt>
+<dd>Number of qubits.</dd>
+<dt><em>target (int)</em>:</dt>
+<dd>Target qubit in the staircase circuit.</dd>
+</dl>
+</dd>
+<dt>Returns (list):</dt>
+<dd>List of <code class="docutils literal"><span class="pre">Gate</span></code> objects.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.circuit_templates.circuit6">
+<code class="descclassname">zyglrox.core.circuit_templates.</code><code class="descname">circuit6</code><span class="sig-paren">(</span><em>N: int</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.circuit6" title="Permalink to this definition">¶</a></dt>
+<dd><p>The most expressive circuit at depth <span class="math">\(L=1\)</span> according to <a class="reference external" href="https://arxiv.org/abs/1905.10876">Sim et al. (2019)</a>.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>N (int)</em>:</dt>
+<dd>Number of qubits.</dd>
+</dl>
+</dd>
+<dt>Returns (list):</dt>
+<dd>List of <code class="docutils literal"><span class="pre">Gate</span></code> objects.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.circuit_templates.custom_cnot">
+<code class="descclassname">zyglrox.core.circuit_templates.</code><code class="descname">custom_cnot</code><span class="sig-paren">(</span><em>locs: typing.List</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.custom_cnot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make custom CNOT padding</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>locs (list)</em>:</dt>
+<dd>List with tuples with (control, target).</dd>
+</dl>
+</dd>
+<dt>Returns (list):</dt>
+<dd>List of <code class="docutils literal"><span class="pre">Gate</span></code> objects.</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-zyglrox.core.topologies">
+<span id="topologies"></span><h2>Topologies<a class="headerlink" href="#module-zyglrox.core.topologies" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="zyglrox.core.topologies.graph_kagome_12">
+<code class="descclassname">zyglrox.core.topologies.</code><code class="descname">graph_kagome_12</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.topologies.graph_kagome_12" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.topologies.graph_kagome_12_torus">
+<code class="descclassname">zyglrox.core.topologies.</code><code class="descname">graph_kagome_12_torus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.topologies.graph_kagome_12_torus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.topologies.graph_kagome_18b">
+<code class="descclassname">zyglrox.core.topologies.</code><code class="descname">graph_kagome_18b</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.topologies.graph_kagome_18b" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.topologies.graph_kagome_18b_torus">
+<code class="descclassname">zyglrox.core.topologies.</code><code class="descname">graph_kagome_18b_torus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.topologies.graph_kagome_18b_torus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.topologies.graph_kagome_24">
+<code class="descclassname">zyglrox.core.topologies.</code><code class="descname">graph_kagome_24</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.topologies.graph_kagome_24" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.topologies.graph_kagome_24_torus">
+<code class="descclassname">zyglrox.core.topologies.</code><code class="descname">graph_kagome_24_torus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.topologies.graph_kagome_24_torus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.topologies.graph_kagome_27">
+<code class="descclassname">zyglrox.core.topologies.</code><code class="descname">graph_kagome_27</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.topologies.graph_kagome_27" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-zyglrox.core.edge_coloring">
+<span id="edge-coloring"></span><h2>Edge Coloring<a class="headerlink" href="#module-zyglrox.core.edge_coloring" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.properlyColored">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">properlyColored</code><span class="sig-paren">(</span><em>G</em>, <em>u</em>, <em>D</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.properlyColored" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.checkEdgeColoring">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">checkEdgeColoring</code><span class="sig-paren">(</span><em>G</em>, <em>D</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.checkEdgeColoring" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.conflictLevel">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">conflictLevel</code><span class="sig-paren">(</span><em>G</em>, <em>u</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.conflictLevel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.createConflictDictionary">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">createConflictDictionary</code><span class="sig-paren">(</span><em>G</em>, <em>D</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.createConflictDictionary" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.updateConflictDictionary">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">updateConflictDictionary</code><span class="sig-paren">(</span><em>G</em>, <em>u</em>, <em>conflict_dictionary</em>, <em>old_conflict_level_u</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.updateConflictDictionary" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.maxConflictLevel">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">maxConflictLevel</code><span class="sig-paren">(</span><em>conflict_dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.maxConflictLevel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.totalNumberOfConflicts">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">totalNumberOfConflicts</code><span class="sig-paren">(</span><em>conflict_dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.totalNumberOfConflicts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.colorEdgeAndUpdate">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">colorEdgeAndUpdate</code><span class="sig-paren">(</span><em>G</em>, <em>u</em>, <em>v</em>, <em>color</em>, <em>conflict_dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.colorEdgeAndUpdate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.KempeNext">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">KempeNext</code><span class="sig-paren">(</span><em>G</em>, <em>last</em>, <em>node</em>, <em>new_color</em>, <em>conflict_dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.KempeNext" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.KempeStep">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">KempeStep</code><span class="sig-paren">(</span><em>G</em>, <em>last</em>, <em>node</em>, <em>new_color</em>, <em>conflict_dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.KempeStep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.KempeProcess">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">KempeProcess</code><span class="sig-paren">(</span><em>G</em>, <em>last</em>, <em>node</em>, <em>new_color</em>, <em>conflict_dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.KempeProcess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.KempeStart">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">KempeStart</code><span class="sig-paren">(</span><em>G</em>, <em>D</em>, <em>node</em>, <em>conflict_dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.KempeStart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.preColoring">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">preColoring</code><span class="sig-paren">(</span><em>G</em>, <em>D</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.preColoring" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.heuristic">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">heuristic</code><span class="sig-paren">(</span><em>G</em>, <em>D</em>, <em>repetition_limit</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.heuristic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.edge_coloring.applyHeuristic">
+<code class="descclassname">zyglrox.core.edge_coloring.</code><code class="descname">applyHeuristic</code><span class="sig-paren">(</span><em>G</em>, <em>D</em>, <em>repetition_limit</em>, <em>iteration_limit</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.applyHeuristic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-zyglrox.core.utils">
+<span id="utils"></span><h2>Utils<a class="headerlink" href="#module-zyglrox.core.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="zyglrox.core.utils.integer_generator">
+<code class="descclassname">zyglrox.core.utils.</code><code class="descname">integer_generator</code><span class="sig-paren">(</span><em>start</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.utils.integer_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator for infinite integers. Always useful.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt>start (int):</dt>
+<dd>starting integer for the generator.</dd>
+</dl>
+</dd>
+<dt>Returns (int):</dt>
+<dd>Infinite integers.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.utils.tf_kron">
+<code class="descclassname">zyglrox.core.utils.</code><code class="descname">tf_kron</code><span class="sig-paren">(</span><em>a: tensorflow.python.framework.ops.Tensor</em>, <em>b: tensorflow.python.framework.ops.Tensor</em><span class="sig-paren">)</span> &rarr; tensorflow.python.framework.ops.Tensor<a class="headerlink" href="#zyglrox.core.utils.tf_kron" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implementation of Kronecker product for tensorflow Tensors.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>a (Tensor)</em>:</dt>
+<dd>Tensor of size <span class="math">\(N \times M\)</span></dd>
+<dt><em>b (Tensor)</em>:</dt>
+<dd>Tensor of size <span class="math">\(P \times K\)</span></dd>
+</dl>
+</dd>
+<dt>Returns (Tensor):</dt>
+<dd>Tensor of size <span class="math">\((N \cdot P) \times (M \cdot K)\)</span></dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.utils.partial_trace">
+<code class="descclassname">zyglrox.core.utils.</code><code class="descname">partial_trace</code><span class="sig-paren">(</span><em>psi: tensorflow.python.framework.ops.Tensor</em>, <em>keep: list</em>, <em>dims: list</em><span class="sig-paren">)</span> &rarr; tensorflow.python.framework.ops.Tensor<a class="headerlink" href="#zyglrox.core.utils.partial_trace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the partial trace of an outer product</p>
+<div class="math">
+\[\rho_a = \text{Tr}_b (| u \rangle \langle u |)\]</div>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>psi (tensor)</em>:</dt>
+<dd>Vector to use for outer product</dd>
+<dt><em>keep (list)</em>:</dt>
+<dd>An array of indices of the spaces to keep after being traced. For instance, if the space is
+A x B x C x D and we want to trace out B and D, keep = [0,2]</dd>
+<dt><em>dims (list)</em>:</dt>
+<dd><dl class="first last docutils">
+<dt>An array of the dimensions of each space. For instance, if the space is A x B x C x D,</dt>
+<dd>dims = [dim_A, dim_B, dim_C, dim_D]</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt>Returns (Tensor):</dt>
+<dd>Partially traced out matrix</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.utils.von_neumann_entropy">
+<code class="descclassname">zyglrox.core.utils.</code><code class="descname">von_neumann_entropy</code><span class="sig-paren">(</span><em>rho: typing.Union</em><span class="sig-paren">)</span> &rarr; typing.Union<a class="headerlink" href="#zyglrox.core.utils.von_neumann_entropy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the Von Neumann entropy of a reduced density matrix.</p>
+<div class="math">
+\[S(\rho) = -\text{Tr} \rho \log \rho\]</div>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>red_rho (tensor)</em>:</dt>
+<dd>Density matrix.</dd>
+</dl>
+</dd>
+<dt>Returns (tensor):</dt>
+<dd>Scalar containing the Von Neumann entropy.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.utils.renyi_entropy">
+<code class="descclassname">zyglrox.core.utils.</code><code class="descname">renyi_entropy</code><span class="sig-paren">(</span><em>rho: tensorflow.python.framework.ops.Tensor</em>, <em>alpha: float=0.5</em><span class="sig-paren">)</span> &rarr; tensorflow.python.framework.ops.Tensor<a class="headerlink" href="#zyglrox.core.utils.renyi_entropy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the Von Neumann entropy of a reduced density matrix.</p>
+<div class="math">
+\[S(\rho) = \frac{1}{1-\alpha}\log \text{Tr} \rho^\alpha\]</div>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>red_rho (tensor)</em>:</dt>
+<dd>Density matrix.</dd>
+</dl>
+</dd>
+<dt>Returns (tensor):</dt>
+<dd>Scalar containing the Von Neumann entropy.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.utils.flatten">
+<code class="descclassname">zyglrox.core.utils.</code><code class="descname">flatten</code><span class="sig-paren">(</span><em>x: tensorflow.python.framework.ops.Tensor</em><span class="sig-paren">)</span> &rarr; tensorflow.python.framework.ops.Tensor<a class="headerlink" href="#zyglrox.core.utils.flatten" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flatten tensor to 1D array.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>x (Tensor)</em>:</dt>
+<dd>Input tensor with shape <span class="math">\((M_{i_1},M_{i_2},\ldots,M_{i_m})\)</span>.</dd>
+</dl>
+</dd>
+<dt>Returns (Tensor):</dt>
+<dd>Flattened tensor with shape <span class="math">\((\prod_n^m M_{i_n}, )\)</span>.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.utils.ops_print">
+<code class="descclassname">zyglrox.core.utils.</code><code class="descname">ops_print</code><span class="sig-paren">(</span><em>observables</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.utils.ops_print" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the observables in a readable manner.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt><em>observables (list)</em>:</dt>
+<dd>List of <code class="docutils literal"><span class="pre">Observable</span></code> objects.</dd>
+</dl>
+</dd>
+<dt>Returns (inplace):</dt>
+<dd>None</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.utils.tensordot">
+<code class="descclassname">zyglrox.core.utils.</code><code class="descname">tensordot</code><span class="sig-paren">(</span><em>a</em>, <em>b</em>, <em>axes</em>, <em>name: typing.Union=None</em><span class="sig-paren">)</span> &rarr; tensorflow.python.framework.ops.Tensor<a class="headerlink" href="#zyglrox.core.utils.tensordot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full credit for this part goes to the developers of the Google TensorNetworks library, thanks to Martin for mentioning
+this. Source: <a class="reference external" href="https://github.com/google/TensorNetwork/blob/master/tensornetwork/backends/tensorflow/tensordot2.py">https://github.com/google/TensorNetwork/blob/master/tensornetwork/backends/tensorflow/tensordot2.py</a></p>
+<p>Tensor contraction of a and b along specified axes.
+Tensordot (also known as tensor contraction) sums the product of elements
+from <cite>a</cite> and <cite>b</cite> over the indices specified by <cite>a_axes</cite> and <cite>b_axes</cite>.
+The lists <cite>a_axes</cite> and <cite>b_axes</cite> specify those pairs of axes along which to
+contract the tensors. The axis <cite>a_axes[i]</cite> of <cite>a</cite> must have the same dimension
+as axis <cite>b_axes[i]</cite> of <cite>b</cite> for all <cite>i</cite> in <cite>range(0, len(a_axes))</cite>. The lists
+<cite>a_axes</cite> and <cite>b_axes</cite> must have identical length and consist of unique
+integers that specify valid axes for each of the tensors.
+This operation corresponds to <cite>numpy.tensordot(a, b, axes)</cite>.</p>
+<p>Example 1: When <cite>a</cite> and <cite>b</cite> are matrices (order 2), the case <cite>axes = 1</cite>
+is equivalent to matrix multiplication.</p>
+<p>Example 2: When <cite>a</cite> and <cite>b</cite> are matrices (order 2), the case
+<cite>axes = [[1], [0]]</cite> is equivalent to matrix multiplication.</p>
+<p>Example 3: Suppose that \(a_{ijk}\) and \(b_{lmn}\) represent two
+tensors of order 3. Then, <cite>contract(a, b, [[0], [2]])</cite> is the order 4 tensor
+\(c_{jklm}\) whose entry
+corresponding to the indices \((j,k,l,m)\) is given by:
+\( c_{jklm} = sum_i a_{ijk} b_{lmi} \).</p>
+<p>In general, <cite>order(c) = order(a) + order(b) - 2*len(axes[0])</cite>.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first docutils">
+<dt><em>tf</em>:</dt>
+<dd>The TensorFlow module. This must be passed in instead of imported</dd>
+</dl>
+<p>since we don&#8217;t assume users have TensorFlow installed.</p>
+<dl class="last docutils">
+<dt><em>a</em>:</dt>
+<dd><cite>Tensor</cite> of type <cite>float32</cite> or <cite>float64</cite>.</dd>
+<dt><em>b</em>:</dt>
+<dd><cite>Tensor</cite> with the same type as <cite>a</cite>.</dd>
+<dt><em>axes</em>:</dt>
+<dd>Either a scalar <cite>N</cite>, or a list or an <cite>int32</cite> <cite>Tensor</cite> of shape [2, k].
+If axes is a scalar, sum over the last N axes of a and the first N axes of
+b in order. If axes is a list or <cite>Tensor</cite> the first and second row contain
+the set of unique integers specifying axes along which the contraction is
+computed, for <cite>a</cite> and <cite>b</cite>, respectively. The number of axes for <cite>a</cite> and
+<cite>b</cite> must be equal.</dd>
+<dt><em>name</em>:</dt>
+<dd>A name for the operation (optional).</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd>A <cite>Tensor</cite> with the same type as <cite>a</cite>.</dd>
+<dt>Raises:</dt>
+<dd><dl class="first last docutils">
+<dt>ValueError:</dt>
+<dd>If the shapes of <cite>a</cite>, <cite>b</cite>, and <cite>axes</cite> are incompatible.</dd>
+<dt>IndexError:</dt>
+<dd>If the values in axes exceed the rank of the corresponding
+tensor.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="zyglrox.core.gates.CNOT.html" class="btn btn-neutral float-right" title="gates.CNOT" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Roeland Wiersema.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
