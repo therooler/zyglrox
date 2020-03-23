@@ -1,0 +1,14 @@
+# using conda 4.6.12
+name: zyglrox
+dependencies:
+  - python=3.7
+  - pip
+  - tensorflow-gpu=1.15.0
+  - scipy
+  - pip:
+      - matplotlib
+      - pennylane==0.7.0
+      - tensorflow-probability==0.8.0
+      - qiskit
+      - pytest
+      - networkx

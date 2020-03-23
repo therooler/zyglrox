@@ -1,0 +1,15 @@
+.idea
+**/__pycache__
+**/tensorboard
+**/hamiltonians
+**/pytext_cache
+**/logdir
+literature
+*.pyc
+*.pdf
+legacy
+**/data
+docs/_static/svg/
+/build/
+cuda.env
+/tfcheckpoints/
