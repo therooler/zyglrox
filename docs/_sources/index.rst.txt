@@ -11,7 +11,7 @@ Additionally, ``zyglrox`` can easily be plugged into a wide range of deep learni
 with hybrid quantum machine learning models.
 
 DISCLAIMER: This package is not a Google product and is in no way associated with `Tensorflow Quantum <https://www.tensorflow.org/quantum>`_,
-Google's official Tensorflow Quantum Simulator. Additionally, ``zyglrox`` is based on TensorFlow 1.x, wheras Tensorflow Quantum is based on TensorFlow 2.x.
+Google's official Tensorflow Quantum Simulator. Additionally, ``zyglrox`` is based on TensorFlow 1.x, whereas Tensorflow Quantum is based on TensorFlow 2.x.
 
 No I mean why did you name it zyglrox?
 ######################################
