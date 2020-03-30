@@ -224,10 +224,11 @@ class QuantumVariationalEigensolver(object):
         assert self.TRAIN, "Train the model before plotting"
         res = None
         grid = list(range(len(self.energy_per_epoch)))
+        if self.exact:
+            res = np.abs(np.min(self.energy_per_epoch) - self.gs_energy)
         if plot:
             plt.plot(grid, np.array(self.energy_per_epoch).flatten(), label='QVE')
             if self.exact:
-                res = np.abs(np.min(self.energy_per_epoch) - self.gs_energy)
                 print("Residual Energy = {}".format(res))
                 plt.ylim([self.gs_energy - 1, 0])
                 plt.plot(grid, [self.gs_energy for _ in range(len(self.energy_per_epoch))], label='Exact')
