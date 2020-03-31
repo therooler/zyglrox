@@ -372,7 +372,9 @@ class Hamiltonian(object):
             max_degree = max([val for (_, val) in g.degree()])
             # assert max_degree < 5, NotImplementedError(
             #     "If the number of degrees is larger than 4, we need to add code to handle this")
-            applyHeuristic(g, max_degree, 50, 50)
+            if not applyHeuristic(g, max_degree, 50, 50):
+                print("Trying for degree {}+1".format(max_degree))
+                applyHeuristic(g, max_degree+1, 50, 50)
             self.edge_coloring = [g[e[0]][e[1]]['color'] for e in g.edges()]
             self.colored_edges = {}
             color_names = {0: 'purple', 1: 'blue', 2: 'green', 3: 'yellow', 4: 'color5', 5: 'color6', 6: 'color7', 7: 'color8',
@@ -438,9 +440,9 @@ class TFI(Hamiltonian):
         interactions = {**interactions, **additional_interactions}
         model_parameters = {**model_parameters, **additional_model_parameters}
         self.nsites = max(topology.keys()) + 1
+        name = kwargs.pop('name', "TFI_{}qb_g_{:.2f}".format(self.nsites, g))
 
-        super(TFI, self).__init__(topology, interactions, model_parameters, name="TFI_{}qb_g_{:.2f}".format(self.nsites, g),
-                                  **kwargs)
+        super(TFI, self).__init__(topology, interactions, model_parameters, name=name,**kwargs)
 
 
 class HeisenbergXXX(Hamiltonian):
@@ -489,8 +491,7 @@ class HeisenbergXXX(Hamiltonian):
         self.nsites = max(topology.keys()) + 1
         name = kwargs.pop('name', "XXX_{}qb".format(self.nsites))
 
-        super(HeisenbergXXX, self).__init__(topology, interactions, model_parameters,
-                                            name=name, **kwargs)
+        super(HeisenbergXXX, self).__init__(topology, interactions, model_parameters,  name=name, **kwargs)
 
 
 class HeisenbergXXZ(Hamiltonian):
@@ -543,8 +544,7 @@ class HeisenbergXXZ(Hamiltonian):
         self.nsites = max(topology.keys()) + 1
         name = kwargs.pop('name', "XXY_{}qb_delta_{}".format(self.nsites, delta))
 
-        super(HeisenbergXXZ, self).__init__(topology, interactions, model_parameters,
-                                            name=name, **kwargs)
+        super(HeisenbergXXZ, self).__init__(topology, interactions, model_parameters,name=name, **kwargs)
 
 
 class HeisenbergXYZ(Hamiltonian):
@@ -852,7 +852,8 @@ def standard_topologies(L, topology: str, **kwargs) -> dict:
             nx_graph = nx.to_dict_of_lists(nx.grid_2d_graph(L, M, periodic=True))
             for k, v in nx_graph.items():
                 if k[0] == 0:
-                    nx_graph[k].remove((M - 1, k[1]))
+                    nx_graph[k].remove((L - 1, k[1]))
+
                 if k[0] == M - 1:
                     nx_graph[k].remove((0, k[1]))
         for k, v in nx_graph.items():
