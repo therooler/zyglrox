@@ -139,13 +139,13 @@ def applyHeuristic(G, D, repetition_limit, iteration_limit):
     preColoring(G, D)
     number_of_iterations = 1
     while not heuristic(G, D, repetition_limit):
-        print(number_of_iterations)
         if number_of_iterations > iteration_limit:
             break
         preColoring(G, D)
         number_of_iterations += 1
     print("Number of iterations: {}".format(number_of_iterations))
     print("Edge-coloring successful {}".format(checkEdgeColoring(G, D)))
+    return checkEdgeColoring(G,D)
 
 
 # if __name__ == "__main__":
