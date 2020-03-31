@@ -4,12 +4,10 @@
 **/hamiltonians
 **/pytext_cache
 **/logdir
-literature
 *.pyc
 *.pdf
-legacy
 **/data
 docsrc/_static/svg/
 /build/
-cuda.env
 /tfcheckpoints/
+copy_src.sh
