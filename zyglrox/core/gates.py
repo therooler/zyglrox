@@ -148,23 +148,6 @@ class Gate(Layer):
             with tf.compat.v1.variable_scope(name_or_scope=None, default_name="gate_init"):
                 if self._batch_params:
                     assert tf.is_tensor(self.value), "batch_params=True, but no external input provided."
-                # Set the gate parameters to the external input, if necessary.
-                # if tf.is_tensor(self.external_input):
-                #     ext_input_shape = self.external_input.shape.as_list()
-                # if ((ext_input_shape[0] == None) or (ext_input_shape[0] > 1)):
-                #     assert self._batch_params, "Received parameters with shape {}, but batch_params = {}, pass the batch_params=True argument " \
-                #                                "to the QuantumCircuit class to enable batches of parameters.".format(
-                #         self.external_input.shape.as_list(), self._batch_params)
-                #     assert ext_input_shape[1:] == [self.nparams, 1], \
-                #         "external input must have shape {}, received {}".format(
-                #             [None, self.nparams, 1], self.external_input.shape.as_list()
-                #         )
-                # else:
-                #     assert ext_input_shape == [1, self.nparams, 1], \
-                #         "external input must have shape {}, received {}".format(
-                #             [1, self.nparams, 1], self.external_input.shape.as_list()
-                #         )
-                # self.theta = self.external_input
                 if not self.trainable:
                     if self.value is not None:
                         self.theta = tf.convert_to_tensor(self.value)
@@ -245,6 +228,8 @@ def pauli_z():
 def hadamard():
     return tf.convert_to_tensor(np.array([[1, 1], [1, -1]]) / np.math.sqrt(2), dtype=TF_COMPLEX_DTYPE)
 
+def t_gate():
+    return tf.convert_to_tensor(np.array([[1, 0], [0, np.exp(1j * np.pi/4)]]), dtype=TF_COMPLEX_DTYPE)
 
 def swap():
     return tf.convert_to_tensor(np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]),
@@ -307,6 +292,42 @@ class Hadamard(Gate):
         phi = tensordot(self.op, inputs, axes=self.tdot_axes)
         return tf.transpose(phi, perm=self.inv_perm)
 
+class T(Gate):
+    r"""
+    Gate that implements the T unitary operation.
+
+    .. math::
+
+        \text{H} = \frac{1}{\sqrt{2}}
+        \begin{pmatrix}
+        1 & 0 \\
+        0& e^{i \pi/4}
+        \end{pmatrix}
+
+    """
+
+    def __init__(self, wires: List[int], value: List[float] = None, conjugate=False, name=None, **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'T_' + '_'.join([str(s) for s in wires])
+        assert len(wires) == 1, "Gate should operate on one qubit, found {}".format(wires)
+        super(T, self).__init__(nparams=0, wires=wires, value=value, name=name, **kwargs)
+        self.conjugate = conjugate
+
+    def build(self, input_shape):
+        super(T, self).build(input_shape)
+
+        self.op = t_gate()
+        if self.conjugate:
+            self.op = tf.transpose(self.op, conjugate=True)
+
+    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        phi = tensordot(self.op, inputs, axes=self.tdot_axes)
+        return tf.transpose(phi, perm=self.inv_perm)
 
 class PauliX(Gate):
     r"""
