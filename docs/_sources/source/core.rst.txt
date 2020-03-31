@@ -178,6 +178,15 @@ Edge Coloring
    :undoc-members:
    :show-inheritance:
 
+Optimizers
+---------------------
+
+.. automodule:: zyglrox.core.optimizers
+   :members:
+   :member-order: bysource
+   :undoc-members:
+   :show-inheritance:
+
 Utils
 -----------------
 

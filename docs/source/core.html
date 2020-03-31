@@ -138,6 +138,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.core.circuit_templates">Circuit Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.core.topologies">Topologies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.core.edge_coloring">Edge Coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.core.optimizers">Optimizers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-zyglrox.core.utils">Utils</a></li>
 </ul>
 </li>
@@ -992,6 +993,82 @@ Takes the kwargs <code class="docutils literal notranslate"><span class="pre">po
 <dl class="function">
 <dt id="zyglrox.core.edge_coloring.applyHeuristic">
 <code class="sig-prename descclassname">zyglrox.core.edge_coloring.</code><code class="sig-name descname">applyHeuristic</code><span class="sig-paren">(</span><em class="sig-param">G</em>, <em class="sig-param">D</em>, <em class="sig-param">repetition_limit</em>, <em class="sig-param">iteration_limit</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.edge_coloring.applyHeuristic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-zyglrox.core.optimizers">
+<span id="optimizers"></span><h2>Optimizers<a class="headerlink" href="#module-zyglrox.core.optimizers" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="zyglrox.core.optimizers.Newton">
+<code class="sig-prename descclassname">zyglrox.core.optimizers.</code><code class="sig-name descname">Newton</code><span class="sig-paren">(</span><em class="sig-param">loss</em>, <em class="sig-param">vrs</em>, <em class="sig-param">optimizer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.optimizers.Newton" title="Permalink to this definition">¶</a></dt>
+<dd><p>Newton’s second order gradient method.</p>
+<p>Args:</p>
+<blockquote>
+<div><dl class="simple">
+<dt><em>loss (Tensor)</em>:</dt><dd><p>Loss function that uses the provided state.</p>
+</dd>
+<dt><em>vrs (Variables)</em>:</dt><dd><p>Variables to be optimized.</p>
+</dd>
+<dt><em>optimizer (Tensorflow Optimizer)</em>:</dt><dd><p>Tensorflow optimizer from the tf.train API</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns (Operation):</dt><dd><p>Train step operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.optimizers.ImaginaryTimeEvolution">
+<code class="sig-prename descclassname">zyglrox.core.optimizers.</code><code class="sig-name descname">ImaginaryTimeEvolution</code><span class="sig-paren">(</span><em class="sig-param">state</em>, <em class="sig-param">loss</em>, <em class="sig-param">vrs</em>, <em class="sig-param">optimizer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.optimizers.ImaginaryTimeEvolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implementation of the imaginary time evolution gradient method</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt><em>state (Tensor)</em>:</dt><dd><p>Output state of the circuit.</p>
+</dd>
+<dt><em>loss (Tensor)</em>:</dt><dd><p>Loss function that uses the provided state.</p>
+</dd>
+<dt><em>vrs (Variables)</em>:</dt><dd><p>Variables to be optimized.</p>
+</dd>
+<dt><em>optimizer (Tensorflow Optimizer)</em>:</dt><dd><p>Tensorflow optimizer from the tf.train API</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (Operation):</dt><dd><p>Train step operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.optimizers.QuantumNaturalGradient">
+<code class="sig-prename descclassname">zyglrox.core.optimizers.</code><code class="sig-name descname">QuantumNaturalGradient</code><span class="sig-paren">(</span><em class="sig-param">state</em>, <em class="sig-param">loss</em>, <em class="sig-param">vrs</em>, <em class="sig-param">optimizer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.optimizers.QuantumNaturalGradient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implementation of the quantum natural gradient gradient method</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt><em>state (Tensor)</em>:</dt><dd><p>Output state of the circuit.</p>
+</dd>
+<dt><em>loss (Tensor)</em>:</dt><dd><p>Loss function that uses the provided state.</p>
+</dd>
+<dt><em>vrs (Variables)</em>:</dt><dd><p>Variables to be optimized.</p>
+</dd>
+<dt><em>optimizer (Tensorflow Optimizer)</em>:</dt><dd><p>Tensorflow optimizer from the tf.train API</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (Operation):</dt><dd><p>Train step operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.optimizers.prepGeometricTensor">
+<code class="sig-prename descclassname">zyglrox.core.optimizers.</code><code class="sig-name descname">prepGeometricTensor</code><span class="sig-paren">(</span><em class="sig-param">state</em>, <em class="sig-param">vrs</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.optimizers.prepGeometricTensor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.optimizers.prep_variables">
+<code class="sig-prename descclassname">zyglrox.core.optimizers.</code><code class="sig-name descname">prep_variables</code><span class="sig-paren">(</span><em class="sig-param">vrs</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.optimizers.prep_variables" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
