@@ -32,7 +32,7 @@ class QuantumBoltzmannMachine():
 
     """
 
-    def __init__(self, nqubits: int, qc: QuantumCircuit, pdf: np.ndarray, hamiltonian, optimizer=None):
+    def __init__(self, nqubits: int, qc: QuantumCircuit, pdf: np.ndarray, hamiltonian, optimizer=None,**kwargs):
         r"""
         Initialize
 
@@ -55,11 +55,22 @@ class QuantumBoltzmannMachine():
         """
         self.nspins = nqubits
         self.qc = qc
-        self.qve = QuantumVariationalEigensolver(hamiltonian, qc, device="GPU", optimizer=optimizer, exact=True, feed_in_hamiltonian_terms=True)
+        self.thermal = kwargs.pop('thermal', False)
 
         with tf.name_scope("target_expvals"):
-            target_phi = tf.cast(tf.reshape(tf.stack(np.sqrt(pdf)), [1] + [2 for _ in range(self.nspins)]),
-                                 dtype=tf.complex64)
+            if self.thermal:
+                assert qc.nqubits == self.nspins+1, 'For thermal QBM the quantum circuit must have N+1 qubits.'
+                self.qve = QuantumVariationalEigensolver(hamiltonian, qc, device="GPU", optimizer=optimizer, exact=True,
+                                                         feed_in_hamiltonian_terms=True, thermal=self.thermal)
+                assert len(pdf)==int(2**(self.nspins+1)),'Pdf must have length of 2**({}+1) for thermal QBM, received'.format(self.nspins,len(pdf))
+
+                target_phi = tf.cast(tf.reshape(tf.stack(np.sqrt(pdf)), [1] + [2 for _ in range(self.nspins + 1)]),
+                                     dtype=tf.complex64)
+            else:
+                self.qve = QuantumVariationalEigensolver(hamiltonian, qc, device="GPU", optimizer=optimizer, exact=True,
+                                                         feed_in_hamiltonian_terms=True, thermal=self.thermal)
+                target_phi = tf.cast(tf.reshape(tf.stack(np.sqrt(pdf)), [1] + [2 for _ in range(self.nspins)]),
+                                     dtype=tf.complex64)
             expval_layer = ExpectationValue(self.qve.obs)
             target_expvals = expval_layer(target_phi)
         self.target_expvals = self.qve.qc._sess.run(target_expvals).flatten()
