@@ -28,6 +28,7 @@ from zyglrox.core.circuit import QuantumCircuit
 from zyglrox.core.hamiltonians import Hamiltonian
 from zyglrox.core._config import TF_FLOAT_DTYPE, TF_COMPLEX_DTYPE
 
+
 class QuantumVariationalEigensolver(object):
     """
     Quantum Variational Eigensolver according to  `Peruzzo et al. (2014) <https://arxiv.org/abs/1304.3061>`_ with gradient based
@@ -35,7 +36,7 @@ class QuantumVariationalEigensolver(object):
 
     """
 
-    def __init__(self, hamiltonian: Hamiltonian, qc: QuantumCircuit, exact=False, optimizer=None, **params):
+    def __init__(self, hamiltonian: Hamiltonian, qc: QuantumCircuit, exact=False, optimizer=None, **kwargs):
         r"""
         We take a quantum circuit with parameters :math:`\theta` which
         implements some unitary transformation :math:`\mathcal{U}(\theta)`. This unitary brings our initial state
@@ -101,24 +102,24 @@ class QuantumVariationalEigensolver(object):
         self.qc = qc
         self.exact = exact
         self.TRAIN = False
-
-        assert self.hamiltonian.nsites == self.qc.nqubits, "hamiltonian defined for {}, but quantum circuit has only {} qubits".format(
-            self.hamiltonian.nsites, self.qc.nqubits)
-
-        self.epsilon = params.get("epsilon", 0.05)
-        self.model_name = params.get("model_name", 'QVE')
-        self.save_model = params.get("save_model", False)
-        self.load_model = params.get("load_model", False)
-        self.verbose = params.get("verbose", True)
-        self.feed_in_hamiltonian_terms = params.get("feed_in_hamiltonian_terms", False)
-        self.tfcheckpoint_path = params.get("tfcheckpoint_path", "./tfcheckpoints")
+        self.thermal = kwargs.pop('thermal', False)
+        if not self.thermal:
+            assert self.hamiltonian.nsites == self.qc.nqubits, "hamiltonian defined for {}, but quantum circuit has only {} qubits".format(
+                self.hamiltonian.nsites, self.qc.nqubits)
+        self.epsilon = kwargs.get("epsilon", 0.05)
+        self.ngpus = self.qc.ngpus
+        self.model_name = kwargs.get("model_name", 'QVE')
+        self.save_model = kwargs.get("save_model", False)
+        self.load_model = kwargs.get("load_model", False)
+        self.verbose = kwargs.get("verbose", True)
+        self.feed_in_hamiltonian_terms = kwargs.get("feed_in_hamiltonian_terms", False)
+        self.tfcheckpoint_path = kwargs.get("tfcheckpoint_path", "./tfcheckpoints")
         if optimizer is None:
             optimizer = tf.compat.v1.train.AdamOptimizer(self.epsilon)
-        # else:
-        #     assert isinstance(optimizer,
-        #                       tf.keras.optimizers.Optimizer), "Passed optimizer must be a tensorflow 'Optimizer' object, received {}".format(
-        #         type(optimizer))
-        self._build_graph(optimizer)
+        if (self.ngpus > 1):
+            self._build_graph_multi_gpu(optimizer)
+        else:
+            self._build_graph(optimizer)
 
     def _build_graph(self, optimizer):
         """
@@ -162,6 +163,52 @@ class QuantumVariationalEigensolver(object):
             out = self.saver.restore(self.qc._sess, self.tfcheckpoint_path + self.model_name)
             print("Loaded model from {}".format(out))
 
+    def _build_graph_multi_gpu(self, optimizer):
+        """
+        Build the computational tensorflow graph.
+
+        Args:
+            *optimizer (tf.optimizers.Optimizer)*:
+                Desired optimizer to perform the QVE algorithm.
+
+        Returns (inplace):
+            None
+
+        """
+        assert self.qc.ngpus == self.ngpus, "Number of GPUs between QuantumCircuit and QuantumVariationalEigensolver not equal: {} and {}".format(
+            self.qc.ngpus, self.ngpus)
+        with tf.device('/GPU:0'):
+            if self.exact:
+                with tf.name_scope("exact_hamiltonian"):
+                    self.hamiltonian.get_hamiltonian()
+                    self.gs_energy = self.hamiltonian.energies[0]
+                    self.gs_wavefunction = self.hamiltonian.gs
+
+        phi = self.qc.execute()
+        with tf.device('/GPU:0'):
+            with tf.name_scope("train_step"):
+                self.optimizer = optimizer
+                self.expectation_layer = ExpectationValue(self.obs)
+                self.expvals = self.expectation_layer(phi)
+                if self.feed_in_hamiltonian_terms:
+                    self.hamiltonian_terms_feed = tf.compat.v1.placeholder(dtype=TF_FLOAT_DTYPE,
+                                                                           shape=len(self.hamiltonian_terms),
+                                                                           name='terms')
+                    self.energy = tf.reduce_sum(flatten(self.hamiltonian_terms_feed) * flatten(self.expvals),
+                                                name="energy")
+                else:
+                    self.energy = tf.reduce_sum(
+                        tf.constant(self.hamiltonian_terms.flatten(), dtype=TF_FLOAT_DTYPE) * flatten(self.expvals),
+                        name="energy")
+                self.train_step = self.optimizer.minimize(self.energy)
+
+        if self.save_model:
+            self.saver = tf.compat.v1.train.Saver([self.qc.circuit.trainable_variables], max_to_keep=4)
+        self.qc.initialize()
+        if self.load_model:
+            out = self.saver.restore(self.qc._sess, self.tfcheckpoint_path + self.model_name)
+            print("Loaded model from {}".format(out))
+            
     def train(self, epochs=1000, tol=1e-8, fetch_from_graph={}) -> np.ndarray:
         r"""
         Train the quantum variational eigensolver. We minimize the energy :math:`\langle H \rangle_\theta` as defined above.
@@ -516,7 +563,8 @@ class QuantumVariationalEigensolverGradFree(object):
             self.expectation_layer = ExpectationValue(self.obs)
             self.expvals = self.expectation_layer(phi)
             if self.feed_in_hamiltonian_terms:
-                self.hamiltonian_terms = tf.compat.v1.placeholder(dtype=TF_FLOAT_DTYPE, shape=len(self.hamiltonian_terms),
+                self.hamiltonian_terms = tf.compat.v1.placeholder(dtype=TF_FLOAT_DTYPE,
+                                                                  shape=len(self.hamiltonian_terms),
                                                                   name='terms')
                 self.energy = tf.reduce_sum(flatten(self.hamiltonian_terms) * flatten(self.expvals), name="energy")
             else:
