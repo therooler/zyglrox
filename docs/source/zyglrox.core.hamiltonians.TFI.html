@@ -113,6 +113,7 @@
 <li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.circuit_templates">Circuit Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.topologies">Topologies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.edge_coloring">Edge Coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.optimizers">Optimizers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.utils">Utils</a></li>
 </ul>
 </li>
@@ -196,7 +197,7 @@
 <em class="property">class </em><code class="sig-prename descclassname">zyglrox.core.hamiltonians.</code><code class="sig-name descname">TFI</code><span class="sig-paren">(</span><em class="sig-param">topology: Union[dict, str], g: float = 1.0, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.hamiltonians.TFI" title="Permalink to this definition">¶</a></dt>
 <dd><p>The transverse field Ising-model is given by the Hamiltonian</p>
 <div class="math notranslate nohighlight">
-\[H = \sum_{&lt;i,j&gt;}^N  J_z^{ij} \sigma_{i}^{z}\sigma_{j}^{z} + g \sum_{i}^N \sigma_{i}^{x}\]</div>
+\[H = -\sum_{&lt;i,j&gt;}^N  z^{ij} \sigma_{i}^{z}\sigma_{j}^{z} - g \sum_{i}^N \sigma_{i}^{x}\]</div>
 <p>with <span class="math notranslate nohighlight">\(N\)</span> the number of spins. This function takes kwargs <code class="docutils literal notranslate"><span class="pre">L</span></code> and <code class="docutils literal notranslate"><span class="pre">M</span></code> that can be used to specify the
 size of the standard topologies [‘line’, ‘rect_lattice’].</p>
 <dl class="simple">

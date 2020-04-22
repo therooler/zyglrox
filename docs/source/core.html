@@ -266,16 +266,6 @@ The circuit is defined by passing a list of <code class="docutils literal notran
 </dd>
 </dl>
 <dl class="method">
-<dt id="zyglrox.core.circuit.QuantumCircuit.build_graph">
-<code class="sig-name descname">build_graph</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit.QuantumCircuit.build_graph" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build the computational graph of the quantum circuit.</p>
-<dl class="simple">
-<dt>Returns (inplace):</dt><dd><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
 <dt id="zyglrox.core.circuit.QuantumCircuit.initialize">
 <code class="sig-name descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#zyglrox.core.circuit.QuantumCircuit.initialize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize session, variables, and the Tensorboard writer.</p>
@@ -337,6 +327,11 @@ nparams is the total number of parameters in the circuit.</p>
 </dl>
 <p>Returns:</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="zyglrox.core.circuit.QuantumCircuit.print_layer_ordering">
+<code class="sig-name descname">print_layer_ordering</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit.QuantumCircuit.print_layer_ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -1042,7 +1037,7 @@ Takes the kwargs <code class="docutils literal notranslate"><span class="pre">po
 
 <dl class="function">
 <dt id="zyglrox.core.optimizers.QuantumNaturalGradient">
-<code class="sig-prename descclassname">zyglrox.core.optimizers.</code><code class="sig-name descname">QuantumNaturalGradient</code><span class="sig-paren">(</span><em class="sig-param">state</em>, <em class="sig-param">loss</em>, <em class="sig-param">vrs</em>, <em class="sig-param">optimizer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.optimizers.QuantumNaturalGradient" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">zyglrox.core.optimizers.</code><code class="sig-name descname">QuantumNaturalGradient</code><span class="sig-paren">(</span><em class="sig-param">state</em>, <em class="sig-param">loss</em>, <em class="sig-param">vrs</em>, <em class="sig-param">optimizer=None</em>, <em class="sig-param">stability_shift=None</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.optimizers.QuantumNaturalGradient" title="Permalink to this definition">¶</a></dt>
 <dd><p>Implementation of the quantum natural gradient gradient method</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">

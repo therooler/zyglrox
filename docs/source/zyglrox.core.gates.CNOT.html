@@ -127,6 +127,7 @@
 <li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.circuit_templates">Circuit Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.topologies">Topologies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.edge_coloring">Edge Coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.optimizers">Optimizers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core.html#module-zyglrox.core.utils">Utils</a></li>
 </ul>
 </li>
@@ -208,7 +209,7 @@
 <dl class="class">
 <dt id="zyglrox.core.gates.CNOT">
 <em class="property">class </em><code class="sig-prename descclassname">zyglrox.core.gates.</code><code class="sig-name descname">CNOT</code><span class="sig-paren">(</span><em class="sig-param">wires: List[int], value: List[float] = None, conjugate=False, name=None, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.gates.CNOT" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gate that implements the CNOT unitary operation.</p>
+<dd><p>Gate that implements the CNOT unitary operation. Order of wires is c, t</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\text{CNOT} =
 \begin{pmatrix}
