@@ -73,26 +73,27 @@ def ImaginaryTimeEvolution(state, loss, vrs, optimizer=None):
     """
     if optimizer == None:
         optimizer = tf.train.GradientDescentOptimizer(0.01)
-    jac, nparams = prepGeometricTensor(state, vrs)
+    for variable in vrs:
+        jac, nparams = prepGeometricTensor(state, variable)
 
-    grads = tf.gradients(loss, vrs)
-    sf_metric = []
-    for i in range(nparams):
-        for j in range(nparams):
-            part_1 = tf.math.conj(tf.reshape(jac[i], (1, -1))) @ tf.reshape(jac[j], (-1, 1))
-            sf_metric.append(part_1)
-    eta = tf.math.real(tf.reshape(tf.stack(sf_metric), (nparams, nparams)))
-    grads = tf.stack(grads)
-    grads = tf.linalg.solve(eta, tf.reshape(grads, (-1, 1)))
+        grads = tf.gradients(loss, variable)
+        sf_metric = []
+        for i in range(nparams):
+            for j in range(nparams):
+                part_1 = tf.math.conj(tf.reshape(jac[i], (1, -1))) @ tf.reshape(jac[j], (-1, 1))
+                sf_metric.append(part_1)
+        eta = tf.math.real(tf.reshape(tf.stack(sf_metric), (nparams, nparams)))
+        grads = tf.stack(grads)
+        grads = tf.linalg.solve(eta, tf.reshape(grads, (-1, 1)))
 
-    if len(vrs)==1:
-        grads = tf.reshape(grads, (vrs[0].shape))
-        return optimizer.apply_gradients(zip([grads], vrs))
-    else:
-        grads = tf.split(grads, nparams, axis=0)
-        return optimizer.apply_gradients(zip(grads, vrs))
+        if len(variable)==1:
+            grads = tf.reshape(grads, (variable[0].shape))
+            return optimizer.apply_gradients(zip([grads], variable))
+        else:
+            grads = tf.split(grads, nparams, axis=0)
+            return optimizer.apply_gradients(zip(grads, variable))
 
-def QuantumNaturalGradient(state, loss, vrs, optimizer=None):
+def QuantumNaturalGradient(state, loss, vrs, optimizer=None, stability_shift = None):
     """
     Implementation of the quantum natural gradient gradient method
 
@@ -115,26 +116,32 @@ def QuantumNaturalGradient(state, loss, vrs, optimizer=None):
     """
     if optimizer == None:
         optimizer = tf.train.GradientDescentOptimizer(0.01)
-    jac, nparams = prepGeometricTensor(state, vrs)
+    assign_ops = []
+    for variable in vrs:
+        variable = [variable]
+        jac, nparams = prepGeometricTensor(state, variable)
 
-    grads = tf.gradients(loss, vrs)
-    sf_metric = []
+        grads = tf.gradients(loss, variable)
+        sf_metric = []
 
-    for i in range(nparams):
-        for j in range(nparams):
-            part_1 = tf.math.conj(tf.reshape(jac[i], (1, -1))) @ tf.reshape(jac[j], (-1, 1))
-            part_2 = tf.math.conj(tf.reshape(jac[i], (1, -1))) @ tf.reshape(state, (-1, 1)) +\
-                     tf.math.conj(tf.reshape(state, (1, -1))) @ tf.reshape(jac[j], (-1, 1))
-            sf_metric.append(part_1 - part_2)
-    eta = tf.math.real(tf.reshape(tf.stack(sf_metric), (nparams, nparams)))
-    grads = tf.stack(grads)
-    grads = tf.linalg.solve(eta, tf.reshape(grads, (-1, 1)))
-    if len(vrs)==1:
-        grads = tf.reshape(grads, (vrs[0].shape))
-        return optimizer.apply_gradients(zip([grads], vrs))
-    else:
-        grads = tf.split(grads, nparams, axis=0)
-        return optimizer.apply_gradients(zip(grads, vrs))
+        for i in range(nparams):
+            for j in range(nparams):
+                part_1 = tf.math.conj(tf.reshape(jac[i], (1, -1))) @ tf.reshape(jac[j], (-1, 1))
+                part_2 = tf.math.conj(tf.reshape(jac[i], (1, -1))) @ tf.reshape(state, (-1, 1)) +\
+                         tf.math.conj(tf.reshape(state, (1, -1))) @ tf.reshape(jac[j], (-1, 1))
+                sf_metric.append(part_1 - part_2)
+        eta = tf.math.real(tf.reshape(tf.stack(sf_metric), (nparams, nparams)))
+        grads = tf.stack(grads)
+        if stability_shift is not None:
+            eta += tf.eye(*eta.shape.as_list()) * stability_shift
+        grads = tf.linalg.solve(eta, tf.reshape(grads, (-1, 1)))
+        if len(variable)==1:
+            grads = tf.reshape(grads, (variable[0].shape))
+            assign_ops.append(optimizer.apply_gradients(zip([grads], variable)))
+        else:
+            grads = tf.split(grads, nparams, axis=0)
+            assign_ops.append(optimizer.apply_gradients(zip(grads, variable)))
+    return assign_ops
 
 def prepGeometricTensor(state, vrs):
     nparams = prep_variables(vrs)
