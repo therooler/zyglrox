@@ -31,7 +31,8 @@ def integer_generator(start):
     """
     start -= 1
     while True:
-        yield start + 1
+        start+=1
+        yield start
 
 def tf_kron(a: tf.Tensor, b: tf.Tensor) -> tf.Tensor:
     r"""
@@ -92,7 +93,7 @@ def partial_trace(psi: tf.Tensor, keep: list, dims: list) -> tf.Tensor:
     idx_out = letters[-1] + ''.join(
         [i for i, j in zip(idx1, idx2) if i != j] + [j for i, j in zip(idx1, idx2) if i != j])
     psi = tf.reshape(psi, dims)
-    rho_a = tf.einsum(idx1 + ',' + idx2 + '->' + idx_out, psi, tf.conj(psi))
+    rho_a = tf.einsum(idx1 + ',' + idx2 + '->' + idx_out, psi, tf.math.conj(psi))
     return tf.reshape(rho_a, (-1, Nkeep, Nkeep))
 
 
@@ -143,11 +144,11 @@ def renyi_entropy(rho: tf.Tensor, alpha: float = 0.5) -> tf.Tensor:
     """
     assert (alpha < 1) & (0 < alpha)
     if isinstance(rho, np.ndarray):
-        lam, _ = np.linalg.eigh(rho)
+        lam = np.linalg.eigvalsh(rho)
         lam = np.clip(tf.math.real(lam), 1e-8, 1e12)
         return (1 / (1 - alpha)) * np.log(np.sum(np.power(lam, alpha), axis=1))
     elif isinstance(rho, tf.Tensor):
-        lam, _ = tf.linalg.eigh(rho)
+        lam  = tf.linalg.eigvalsh(rho)
         lam = tf.clip_by_value(tf.math.real(lam), 1e-8, 1e12)
         return (1 / (1 - alpha)) * tf.math.log(tf.reduce_sum(tf.pow(lam, tf.constant(alpha, dtype=lam.dtype)), axis=1))
     else:
