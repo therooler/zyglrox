@@ -61,6 +61,8 @@ class QuantumCircuit:
         self.nparams = 0
         self.ngates = 0
         self.nlayers = 0
+        self.ngpus = kwargs.pop('ngpus', 1)
+        assert self.ngpus >= 1, "The number of gpus must be equal or larger than 1, received {}".format(self.ngpus)
         self.device = kwargs.pop('device', 'CPU')
         self.circuit_order = kwargs.pop('circuit_order', 'gate')
         self.get_phi_per_layer = kwargs.pop('get_phi_per_layer', False)
@@ -72,7 +74,11 @@ class QuantumCircuit:
             else:
                 self.ngates += g.nparams
             self.nparams += g.nparams
-        self.build_graph()
+        if (self.device == 'GPU') & (self.ngpus > 1):
+            self._build_graph_multi_gpu()
+        else:
+            self._build_graph()
+
 
     def __str__(self):
         return "Quantum Circuit\n" + \
@@ -81,7 +87,7 @@ class QuantumCircuit:
                "Number of gates: {}\n".format(self.ngates) + \
                "Number of parameters: {}\n".format(self.nparams)
 
-    def build_graph(self):
+    def _build_graph(self):
         """
         Build the computational graph of the quantum circuit.
 
@@ -97,6 +103,7 @@ class QuantumCircuit:
             self.phi = tf.constant(self.phi, dtype=TF_COMPLEX_DTYPE, name='phi')
             # reshape to multi-index form
             self.phi = tf.reshape(self.phi, [1] + [2 for _ in range(self.nqubits)])
+
         with tf.name_scope("circuit"):
             # Set the first gate to be the input layer. This will be useful later.
             self.gates[0]._input_layer = True
@@ -127,6 +134,42 @@ class QuantumCircuit:
                 else:
                     self.circuit = tf.keras.Sequential(layers=layers, name='circuit')
 
+    def _build_graph_multi_gpu(self):
+        """
+        Build the computational graph of the quantum circuit.
+
+        Returns (inplace):
+            None
+
+        """
+        self.gpu_list = [int(gpu.name[-1]) for gpu in tf.config.experimental.list_physical_devices('GPU')]
+        assert len(self.gpu_list) == self.ngpus, "Expected to find {} GPUs, found devices: GPU {}".format(self.ngpus,
+                                                                                                     self.gpu_list)
+        with tf.device('/GPU:0'):
+            with tf.name_scope("phi"):
+                # initalize the zero quantum state with a constant tensor
+                self.phi = np.zeros((int(2 ** self.nqubits)))
+                self.phi[0] = 1
+                self.phi = tf.constant(self.phi, dtype=TF_COMPLEX_DTYPE, name='phi')
+                # reshape to multi-index form
+                self.phi = tf.reshape(self.phi, [1] + [2 for _ in range(self.nqubits)])
+
+        with tf.name_scope("circuit"):
+            # Set the first gate to be the input layer. This will be useful later.
+            self.gates[0]._input_layer = True
+            if self.batch_params:
+                for g in self.gates:
+                    g._batch_params = True
+                    g._batch_size = self.batch_size
+            if self.circuit_order == 'gate':
+                gates_chunked = np.array_split(self.gates, self.ngpus - 1)
+                self.circuit_chunks = []
+                for gate_chunk, gpu_i in zip(gates_chunked, self.gpu_list):
+                    self.circuit_chunks.append(tf.keras.Sequential(layers=gate_chunk.tolist(), name='circuit_gpu_{}'.format(gpu_i)))
+
+            elif self.circuit_order == 'layer':
+                raise NotImplementedError('"layer" option is not implemented for multi-GPU usage.')
+
     def initialize(self) -> None:
         """
         Initialize session, variables, and the Tensorboard writer.
@@ -145,10 +188,13 @@ class QuantumCircuit:
         assert isinstance(self.device_number, int), 'device_number must be and integer, received {}'.format(
             type(self.device_number))
 
-        with tf.device("/" + self.device + ":" + str(self.device_number)):
-            config = tf.compat.v1.ConfigProto()
-            config.gpu_options.allow_growth = True
-            self._sess = tf.compat.v1.Session(config=config)
+        # with tf.device("/" + self.device + ":" + str(self.device_number)):
+        if self.device == "CPU":
+            config = tf.ConfigProto(device_count={'GPU': 0})
+        else:
+            config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
+        config.gpu_options.allow_growth = True
+        self._sess = tf.compat.v1.Session(config=config)
 
         self._sess.run([tf.compat.v1.global_variables_initializer()])
 
@@ -183,8 +229,14 @@ class QuantumCircuit:
             Circuit output, a wave function of shape (None, 2,...,2).
 
         """
-
-        return self.circuit(inputs, training)
+        if self.ngpus>1:
+            phi = self.circuit_chunks[0](inputs)
+            for circuit_chunk, gpu_i in zip(self.circuit_chunks, self.gpu_list[1:]):
+                with tf.device('/GPU:{}'.format(gpu_i)):
+                    phi = circuit_chunk(phi)
+            return phi
+        else:
+            return self.circuit(inputs, training)
 
     def set_parameters(self, theta):
         """
@@ -236,9 +288,13 @@ class QuantumCircuit:
             if g.layer not in self.gates_per_layers.keys():
                 self.gates_per_layers[g.layer] = []
             self.gates_per_layers[g.layer].append(g)
-            
         self.nlayers = len(self.gates_per_layers)
+        self.LAYER_ORDERED = True
 
+    def print_layer_ordering(self):
+        assert self.LAYER_ORDERED, 'call _get_layer_ordering first before trying to print'
+        for k,v in self.gates_per_layers.items():
+            print('layer {} contains gates {}'.format(k,' '.join([i.__str__() for i in v])))
 
 class CircuitLayer(Layer):
     """
@@ -280,8 +336,9 @@ class CircuitLayer(Layer):
 
         super(CircuitLayer, self).__init__(name=name, **kwargs)
         layers = [g.layer for g in gates]
-        assert len(set(layers))==1, "Layer attributes of all passed gates must be equal, received {}".format(layers)
-        assert all([isinstance(g, Gate) for g in gates]), "Layer attributes of all passed gates must be equal, received {}".format(layers)
+        assert len(set(layers)) == 1, "Layer attributes of all passed gates must be equal, received {}".format(layers)
+        assert all([isinstance(g, Gate) for g in
+                    gates]), "Layer attributes of all passed gates must be equal, received {}".format(layers)
         self.gates = gates
         self.layer = gates[0].layer
 
@@ -301,14 +358,13 @@ class CircuitLayer(Layer):
         super(CircuitLayer, self).build(input_shape)
         self.built = True
 
-
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
         Gate Logic goes here.
 
         """
         phi = self.gates[0](inputs)
-        for i in range(1,len(self.gates)):
+        for i in range(1, len(self.gates)):
             phi = self.gates[i](phi)
         phi = tf.identity(phi, name='phi_layer_{}'.format(self.layer))
         return phi
