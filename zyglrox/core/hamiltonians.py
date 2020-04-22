@@ -94,8 +94,8 @@ class Hamiltonian(object):
         for k, v in interactions.items():
             assert [x in ['x', 'y', 'z'] for x in
                     k], "Interaction must be composed of x, y, z interactions, received {}".format(k)
-            assert isinstance(v,
-                              dict), "The values of the interactions must be either a string or a dictionary, received {} for key '{}'".format(
+            assert isinstance(v, (dict,
+                                  str)), "The values of the interactions must be either str or a dictionary, received {} for key '{}'".format(
                 type(v), k)
             if isinstance(v, dict):
                 assert all(isinstance(x, int) for x in v.keys()), \
@@ -113,7 +113,11 @@ class Hamiltonian(object):
                 assert all(max(x) < self.nsites for y in v.values() for x in y), \
                     "Interaction '{}' has site interactions {}, that are not defined in the model topology with nsites = {}".format(
                         k, list(v.values()), self.nsites)
-
+            if isinstance(v, str):
+                if v == 'topology':
+                    interactions[k] = topology
+                else:
+                    raise ValueError('only allowed string for interaction is "topology", received {}'.format(v))
         ## MODEL PARAMETERS ##
         assert all(x in interactions.keys() for x in model_parameters.keys()), \
             "model_parameters and interactions do not match: {} and {}".format(model_parameters.keys(),
@@ -221,14 +225,14 @@ class Hamiltonian(object):
             print("File " + self.filepath + self.name + "H.npz"
                   + " not found, creating and saving Hamiltonian...")
             scipy.sparse.save_npz(self.filepath + self.name + "H.npz", self.H)
-
             energies, eigenvectors = ssla.eigsh(self.H, k=self.k, which='SA')
             idx = np.argsort(energies)
             energies, eigenvectors = (energies[idx], eigenvectors[:, idx])
             self.d = self._find_degeneracy(energies)
             if self.d == self.k:
                 raise ValueError(
-                    "More than {} degenerate ground states found, increase scipy.sparse.linalg.eigsh k-value".format(self.k))
+                    "More than {} degenerate ground states found, increase scipy.sparse.linalg.eigsh k-value".format(
+                        self.k))
             self.energies = energies[:self.d]
             self.groundstates = eigenvectors[:, :self.d].reshape((-1, self.d))
             self.gs = self.groundstates[:, 0]
@@ -348,9 +352,11 @@ class Hamiltonian(object):
 
         """
         g = self._get_nx_graph()
-        self._get_colored_edges(g)
+
         labels = dict(zip(g.nodes(), [str(i + 1) for i in range(len(g.nodes))]))
         positions = kwargs.pop('pos', None)
+        self._get_colored_edges(g)
+
         if positions is not None:
             nx.drawing.draw_networkx_edges(g, positions, edge_list=g.edges(), edge_color=self.edge_coloring, width=8,
                                            alpha=0.5)
@@ -374,11 +380,13 @@ class Hamiltonian(object):
             #     "If the number of degrees is larger than 4, we need to add code to handle this")
             if not applyHeuristic(g, max_degree, 50, 50):
                 print("Trying for degree {}+1".format(max_degree))
-                applyHeuristic(g, max_degree+1, 50, 50)
+                applyHeuristic(g, max_degree + 1, 50, 50)
             self.edge_coloring = [g[e[0]][e[1]]['color'] for e in g.edges()]
             self.colored_edges = {}
-            color_names = {0: 'purple', 1: 'blue', 2: 'green', 3: 'yellow', 4: 'color5', 5: 'color6', 6: 'color7', 7: 'color8',
-                           8: 'color9', 9: 'color10', 10: 'color11', 11: 'color12', 12: 'color13', 13: 'color14', 14: 'color15', 15: 'color16'}
+            color_names = {0: 'purple', 1: 'blue', 2: 'green', 3: 'yellow', 4: 'color5', 5: 'color6', 6: 'color7',
+                           7: 'color8',
+                           8: 'color9', 9: 'color10', 10: 'color11', 11: 'color12', 12: 'color13', 13: 'color14',
+                           14: 'color15', 15: 'color16'}
             for e in g.edges():
                 c = g[e[0]][e[1]]['color']
                 if color_names[c] not in self.colored_edges.keys():
@@ -402,7 +410,7 @@ class TFI(Hamiltonian):
 
         .. math::
 
-            H = \sum_{<i,j>}^N  J_z^{ij} \sigma_{i}^{z}\sigma_{j}^{z} + g \sum_{i}^N \sigma_{i}^{x}
+            H = -\sum_{<i,j>}^N  z^{ij} \sigma_{i}^{z}\sigma_{j}^{z} - g \sum_{i}^N \sigma_{i}^{x}
 
         with :math:`N` the number of spins. This function takes kwargs ``L`` and ``M`` that can be used to specify the
         size of the standard topologies ['line', 'rect_lattice'].
@@ -433,16 +441,23 @@ class TFI(Hamiltonian):
         # TFI model #
         topology = remove_double_counting(topology)
         interactions = {'zz': topology, 'x': magnetic_field_interaction(topology)}
-        model_parameters = {'zz': 1.0, 'x': g}
-
+        f_or_af = kwargs.pop('f_or_af', 'f')
+        self.nsites = max(topology.keys()) + 1
+        name = kwargs.pop('name', "TFI_{}qb_g_{:.2f}".format(self.nsites, g))
+        if f_or_af == 'f':
+            model_parameters = {'zz': -1.0, 'x': -g}
+        else:
+            model_parameters = {'zz': 1.0, 'x': g}
+        if 'boundary_conditions' in kwargs.keys():
+            name = name + '_' + kwargs['boundary_conditions'] + '_' + f_or_af
+        else:
+            name = name + '_' + f_or_af
         additional_interactions = kwargs.pop("additional_interactions", {})
         additional_model_parameters = kwargs.pop("additional_model_parameters", {})
         interactions = {**interactions, **additional_interactions}
         model_parameters = {**model_parameters, **additional_model_parameters}
-        self.nsites = max(topology.keys()) + 1
-        name = kwargs.pop('name', "TFI_{}qb_g_{:.2f}".format(self.nsites, g))
 
-        super(TFI, self).__init__(topology, interactions, model_parameters, name=name,**kwargs)
+        super(TFI, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
 
 
 class HeisenbergXXX(Hamiltonian):
@@ -472,26 +487,32 @@ class HeisenbergXXX(Hamiltonian):
         assert isinstance(topology,
                           (dict, str)), "Topology must be a string or a dict, received object of type {}".format(
             type(topology))
-        self.boundary_conditions = kwargs.pop('boundary_conditions', None)
 
         if isinstance(topology, str):
             assert 'L' in kwargs.keys(), "If topology is a string, the lattice or line size 'L' must be supplied as a kwarg"
             L = kwargs.pop('L')
             topology = standard_topologies(L, topology=topology, **kwargs)
         topology = remove_double_counting(topology)
-
+        f_or_af = kwargs.pop('f_or_af', 'f')
+        self.nsites = max(topology.keys()) + 1
+        name = kwargs.pop('name', "XXX_{}qb".format(self.nsites))
+        if f_or_af == 'f':
+            model_parameters = {'xx': -1.0,'yy': -1.0,'zz': -1.0}
+        else:
+            model_parameters =  {'xx': 1.0,'yy': 1.0,'zz': 1.0}
+        if 'boundary_conditions' in kwargs.keys():
+            name = name + '_' + kwargs['boundary_conditions'] + '_' + f_or_af
+        else:
+            name = name + '_' + f_or_af
         # Heisenberg XXX model #
         interactions = {'xx': topology, 'yy': topology, 'zz': topology}
-        model_parameters = {}
 
         additional_interactions = kwargs.pop("additional_interactions", {})
         additional_model_parameters = kwargs.pop("additional_model_parameters", {})
         interactions = {**interactions, **additional_interactions}
         model_parameters = {**model_parameters, **additional_model_parameters}
-        self.nsites = max(topology.keys()) + 1
-        name = kwargs.pop('name', "XXX_{}qb".format(self.nsites))
 
-        super(HeisenbergXXX, self).__init__(topology, interactions, model_parameters,  name=name, **kwargs)
+        super(HeisenbergXXX, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
 
 
 class HeisenbergXXZ(Hamiltonian):
@@ -525,7 +546,6 @@ class HeisenbergXXZ(Hamiltonian):
         assert isinstance(topology,
                           (dict, str)), "Topology must be a string or a dict, received object of type {}".format(
             type(topology))
-        self.boundary_conditions = kwargs.pop('boundary_conditions', None)
 
         if isinstance(topology, str):
             assert 'L' in kwargs.keys(), "If topology is a string, the lattice or line size 'L' must be supplied as a kwarg"
@@ -533,18 +553,27 @@ class HeisenbergXXZ(Hamiltonian):
             topology = standard_topologies(L, topology=topology, **kwargs)
         topology = remove_double_counting(topology)
 
-        # Heisenberg XXZ model #
+        f_or_af = kwargs.pop('f_or_af', 'f')
+        self.nsites = max(topology.keys()) + 1
+        name = kwargs.pop('name', "XXZ_{}qb_delta_{:1.2f}".format(self.nsites, delta))
+        if f_or_af == 'f':
+            model_parameters = {'xx': -1.0, 'yy': -1.0, 'zz': -1.0}
+        else:
+            model_parameters = {'xx': 1.0, 'yy': 1.0, 'zz': 1.0}
+        if 'boundary_conditions' in kwargs.keys():
+            name = name + '_' + kwargs['boundary_conditions'] + '_' + f_or_af
+        else:
+            name = name + '_' + f_or_af
+
+        # Heisenberg XXZ model
         interactions = {'xx': topology, 'yy': topology, 'zz': topology}
-        model_parameters = {'zz': delta}
+        model_parameters['zz'] = delta
 
         additional_interactions = kwargs.pop("additional_interactions", {})
         additional_model_parameters = kwargs.pop("additional_model_parameters", {})
         interactions = {**interactions, **additional_interactions}
         model_parameters = {**model_parameters, **additional_model_parameters}
-        self.nsites = max(topology.keys()) + 1
-        name = kwargs.pop('name', "XXY_{}qb_delta_{}".format(self.nsites, delta))
-
-        super(HeisenbergXXZ, self).__init__(topology, interactions, model_parameters,name=name, **kwargs)
+        super(HeisenbergXXZ, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
 
 
 class HeisenbergXYZ(Hamiltonian):
@@ -691,7 +720,7 @@ class QuantumBoltzmann(Hamiltonian):
         # Heisenberg XYZ model #
         mag_field = magnetic_field_interaction(topology)
         interactions = {'xx': topology, 'yy': topology, 'zz': topology,
-                        'x': mag_field , 'y': mag_field, 'z': mag_field}
+                        'x': mag_field, 'y': mag_field, 'z': mag_field}
         links = [tuple(y) for x in topology.values() for y in x]
         sites = [(s,) for s in topology.keys()]
         random_xx = dict(zip(links, np.random.randn(len(links))))
