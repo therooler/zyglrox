@@ -488,7 +488,7 @@ class Swap(Gate):
 
 class CNOT(Gate):
     r"""
-    Gate that implements the CNOT unitary operation.
+    Gate that implements the CNOT unitary operation. Order of wires is c, t
 
     .. math::
 
