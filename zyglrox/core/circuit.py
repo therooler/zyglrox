@@ -20,6 +20,7 @@ from typing import List
 from zyglrox.core._config import TF_COMPLEX_DTYPE
 from zyglrox.core.gates import Gate
 from zyglrox.core.utils import integer_generator
+from zyglrox.core.draw import draw_circuit
 
 
 class QuantumCircuit:
@@ -61,6 +62,7 @@ class QuantumCircuit:
         self.nparams = 0
         self.ngates = 0
         self.nlayers = 0
+        self.LAYER_ORDERED = False
         self.ngpus = kwargs.pop('ngpus', 1)
         assert self.ngpus >= 1, "The number of gpus must be equal or larger than 1, received {}".format(self.ngpus)
         self.device = kwargs.pop('device', 'CPU')
@@ -78,7 +80,6 @@ class QuantumCircuit:
             self._build_graph_multi_gpu()
         else:
             self._build_graph()
-
 
     def __str__(self):
         return "Quantum Circuit\n" + \
@@ -144,7 +145,7 @@ class QuantumCircuit:
         """
         self.gpu_list = [int(gpu.name[-1]) for gpu in tf.config.experimental.list_physical_devices('GPU')]
         assert len(self.gpu_list) == self.ngpus, "Expected to find {} GPUs, found devices: GPU {}".format(self.ngpus,
-                                                                                                     self.gpu_list)
+                                                                                                          self.gpu_list)
         with tf.device('/GPU:0'):
             with tf.name_scope("phi"):
                 # initalize the zero quantum state with a constant tensor
@@ -165,7 +166,8 @@ class QuantumCircuit:
                 gates_chunked = np.array_split(self.gates, self.ngpus - 1)
                 self.circuit_chunks = []
                 for gate_chunk, gpu_i in zip(gates_chunked, self.gpu_list):
-                    self.circuit_chunks.append(tf.keras.Sequential(layers=gate_chunk.tolist(), name='circuit_gpu_{}'.format(gpu_i)))
+                    self.circuit_chunks.append(
+                        tf.keras.Sequential(layers=gate_chunk.tolist(), name='circuit_gpu_{}'.format(gpu_i)))
 
             elif self.circuit_order == 'layer':
                 raise NotImplementedError('"layer" option is not implemented for multi-GPU usage.')
@@ -229,7 +231,7 @@ class QuantumCircuit:
             Circuit output, a wave function of shape (None, 2,...,2).
 
         """
-        if self.ngpus>1:
+        if self.ngpus > 1:
             phi = self.circuit_chunks[0](inputs)
             for circuit_chunk, gpu_i in zip(self.circuit_chunks, self.gpu_list[1:]):
                 with tf.device('/GPU:{}'.format(gpu_i)):
@@ -266,23 +268,29 @@ class QuantumCircuit:
         assert i == self.nparams, "Done setting i parameters, but we have {} parameterized gates".format(self.nparams)
 
     def _get_layer_ordering(self):
-        assert self.circuit_order == 'layer', "Wrong circuit_type: {}".format(self.circuit_order)
+        """
 
+
+        Returns:
+
+        """
         layers = {}
         self.gates_per_layers = {}
-
+        minimal_layer = dict(zip(range(1,self.nqubits+1), [-1 for _ in range(self.nqubits)]))
         s = 0
         for g in self.gates:
             for l in integer_generator(s):
                 if l not in layers.keys():
                     layers[l] = set(range(1, self.nqubits + 1))
-                if all([w in layers[l] for w in g.wires]):
+                if (all([w in layers[l] for w in g.wires])) & (all([minimal_layer[w]<l for w in g.wires])):
                     g.layer = l
                     for w in g.wires:
+                        minimal_layer[w]=l
                         layers[l].remove(w)
                     break
-            if len(layers[s]) == 0:
-                s += 1
+                if len(layers[s]) == 0:
+                    s+=1
+
 
         for g in self.gates:
             if g.layer not in self.gates_per_layers.keys():
@@ -292,9 +300,30 @@ class QuantumCircuit:
         self.LAYER_ORDERED = True
 
     def print_layer_ordering(self):
-        assert self.LAYER_ORDERED, 'call _get_layer_ordering first before trying to print'
-        for k,v in self.gates_per_layers.items():
-            print('layer {} contains gates {}'.format(k,' '.join([i.__str__() for i in v])))
+        """
+
+        Returns:
+
+        """
+        if not self.LAYER_ORDERED:
+            self._get_layer_ordering()
+        for k, v in self.gates_per_layers.items():
+            print('layer {} contains gates {}'.format(k + 1, ','.join([i.__str__() for i in v])))
+
+    def draw(self):
+        """
+        Draw the circuit
+
+        Returns:
+
+        """
+        if not self.LAYER_ORDERED:
+            self._get_layer_ordering()
+        layers_as_str = []
+        for l in range(len(self.gates_per_layers)):
+            layers_as_str.append(','.join([i.__str__() for i in self.gates_per_layers[l]]).split(','))
+        draw_circuit(layers_as_str, self.nqubits)
+
 
 class CircuitLayer(Layer):
     """
