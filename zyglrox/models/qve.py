@@ -155,7 +155,6 @@ class QuantumVariationalEigensolver(object):
                     tf.constant(self.hamiltonian_terms.flatten(), dtype=TF_FLOAT_DTYPE) * flatten(self.expvals),
                     name="energy")
             self.train_step = self.optimizer.minimize(self.energy)
-
         if self.save_model:
             self.saver = tf.compat.v1.train.Saver([self.qc.circuit.trainable_variables], max_to_keep=4)
         self.qc.initialize()
@@ -557,7 +556,7 @@ class QuantumVariationalEigensolverGradFree(object):
                     g.set_external_input(tf.reshape(self.theta_ph[c:c + g.nparams], (1, g.nparams, 1)))
                     c += g.nparams
 
-        phi = self.qc.circuit(self.qc.phi)
+        phi = self.qc.circuit(self.qc.execute())
 
         with tf.name_scope("train_step"):
             self.expectation_layer = ExpectationValue(self.obs)

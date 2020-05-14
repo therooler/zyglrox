@@ -42,7 +42,7 @@ def Newton(loss, vrs, optimizer=None):
     # grads = tf.stack(grads)
     grads = tf.linalg.solve(hessian, tf.reshape(grads, (-1, 1)))
 
-    if len(vrs)==1:
+    if len(vrs) == 1:
         grads = tf.reshape(grads, (vrs[0].shape))
         return optimizer.apply_gradients(zip([grads], vrs)), grads
     else:
@@ -50,7 +50,7 @@ def Newton(loss, vrs, optimizer=None):
         return optimizer.apply_gradients(zip(grads, vrs))
 
 
-def ImaginaryTimeEvolution(state, loss, vrs, optimizer=None):
+def ImaginaryTimeEvolution(state, loss, vrs, optimizer=None, stability_shift=None):
     """
     Implementation of the imaginary time evolution gradient method
 
@@ -74,6 +74,7 @@ def ImaginaryTimeEvolution(state, loss, vrs, optimizer=None):
     if optimizer == None:
         optimizer = tf.train.GradientDescentOptimizer(0.01)
     for variable in vrs:
+        variable = [variable]
         jac, nparams = prepGeometricTensor(state, variable)
 
         grads = tf.gradients(loss, variable)
@@ -84,16 +85,19 @@ def ImaginaryTimeEvolution(state, loss, vrs, optimizer=None):
                 sf_metric.append(part_1)
         eta = tf.math.real(tf.reshape(tf.stack(sf_metric), (nparams, nparams)))
         grads = tf.stack(grads)
+        if stability_shift is not None:
+            eta += tf.eye(*eta.shape.as_list()) * stability_shift
         grads = tf.linalg.solve(eta, tf.reshape(grads, (-1, 1)))
 
-        if len(variable)==1:
+        if len(variable) == 1:
             grads = tf.reshape(grads, (variable[0].shape))
             return optimizer.apply_gradients(zip([grads], variable))
         else:
             grads = tf.split(grads, nparams, axis=0)
             return optimizer.apply_gradients(zip(grads, variable))
 
-def QuantumNaturalGradient(state, loss, vrs, optimizer=None, stability_shift = None):
+
+def QuantumNaturalGradient(state, loss, vrs, optimizer=None, stability_shift=None, learning_rate: float = 0.01):
     """
     Implementation of the quantum natural gradient gradient method
 
@@ -115,7 +119,7 @@ def QuantumNaturalGradient(state, loss, vrs, optimizer=None, stability_shift = N
 
     """
     if optimizer == None:
-        optimizer = tf.train.GradientDescentOptimizer(0.01)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
     assign_ops = []
     for variable in vrs:
         variable = [variable]
@@ -127,7 +131,7 @@ def QuantumNaturalGradient(state, loss, vrs, optimizer=None, stability_shift = N
         for i in range(nparams):
             for j in range(nparams):
                 part_1 = tf.math.conj(tf.reshape(jac[i], (1, -1))) @ tf.reshape(jac[j], (-1, 1))
-                part_2 = tf.math.conj(tf.reshape(jac[i], (1, -1))) @ tf.reshape(state, (-1, 1)) +\
+                part_2 = tf.math.conj(tf.reshape(jac[i], (1, -1))) @ tf.reshape(state, (-1, 1)) + \
                          tf.math.conj(tf.reshape(state, (1, -1))) @ tf.reshape(jac[j], (-1, 1))
                 sf_metric.append(part_1 - part_2)
         eta = tf.math.real(tf.reshape(tf.stack(sf_metric), (nparams, nparams)))
@@ -135,13 +139,14 @@ def QuantumNaturalGradient(state, loss, vrs, optimizer=None, stability_shift = N
         if stability_shift is not None:
             eta += tf.eye(*eta.shape.as_list()) * stability_shift
         grads = tf.linalg.solve(eta, tf.reshape(grads, (-1, 1)))
-        if len(variable)==1:
+        if len(variable) == 1:
             grads = tf.reshape(grads, (variable[0].shape))
             assign_ops.append(optimizer.apply_gradients(zip([grads], variable)))
         else:
             grads = tf.split(grads, nparams, axis=0)
             assign_ops.append(optimizer.apply_gradients(zip(grads, variable)))
     return assign_ops
+
 
 def prepGeometricTensor(state, vrs):
     nparams = prep_variables(vrs)
@@ -156,6 +161,7 @@ def prepGeometricTensor(state, vrs):
     else:
         jac = [tf.complex(jac_r[i], jac_c[i]) for i in range(nparams)]
     return jac, nparams
+
 
 def prep_variables(vrs):
     assert isinstance(vrs, list), "vrs must be a list, received {}".format(type(vrs))

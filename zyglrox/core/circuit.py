@@ -269,9 +269,10 @@ class QuantumCircuit:
 
     def _get_layer_ordering(self):
         """
+        Assign each gate to a layer.
 
-
-        Returns:
+        Returns (inplace):
+            None
 
         """
         layers = {}
@@ -291,7 +292,6 @@ class QuantumCircuit:
                 if len(layers[s]) == 0:
                     s+=1
 
-
         for g in self.gates:
             if g.layer not in self.gates_per_layers.keys():
                 self.gates_per_layers[g.layer] = []
@@ -301,8 +301,10 @@ class QuantumCircuit:
 
     def print_layer_ordering(self):
         """
+        Print the layer gates per layer.
 
-        Returns:
+        Returns (inplace):
+            None
 
         """
         if not self.LAYER_ORDERED:
@@ -312,9 +314,10 @@ class QuantumCircuit:
 
     def draw(self):
         """
-        Draw the circuit
+        Draw the circuit using matplotlib.
 
-        Returns:
+        Returns (inplace):
+            None
 
         """
         if not self.LAYER_ORDERED:

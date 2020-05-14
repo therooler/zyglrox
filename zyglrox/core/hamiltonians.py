@@ -229,6 +229,8 @@ class Hamiltonian(object):
             idx = np.argsort(energies)
             energies, eigenvectors = (energies[idx], eigenvectors[:, idx])
             self.d = self._find_degeneracy(energies)
+            if self.d >1:
+                print("WARNING: Lanczos method is unstable for degenerate spectrum.")
             if self.d == self.k:
                 raise ValueError(
                     "More than {} degenerate ground states found, increase scipy.sparse.linalg.eigsh k-value".format(
@@ -617,6 +619,13 @@ class HeisenbergXYZ(Hamiltonian):
             topology = standard_topologies(L, topology=topology, **kwargs)
         topology = remove_double_counting(topology)
 
+        self.nsites = max(topology.keys()) + 1
+        name = kwargs.pop('name',
+                          "XYZ_{}qb_delta_{:1.2f}_J_{:1.2f}".format(self.nsites, delta, J))
+
+        if 'boundary_conditions' in kwargs.keys():
+            name = name + '_' + kwargs['boundary_conditions']
+
         # Heisenberg XYZ model #
         interactions = {'xx': topology, 'yy': topology, 'zz': topology}
         model_parameters = {'xx': delta, 'yy': delta, 'zz': J}
@@ -625,8 +634,6 @@ class HeisenbergXYZ(Hamiltonian):
         additional_model_parameters = kwargs.pop("additional_model_parameters", {})
         interactions = {**interactions, **additional_interactions}
         model_parameters = {**model_parameters, **additional_model_parameters}
-        self.nsites = max(topology.keys()) + 1
-        name = kwargs.pop('name', "XYZ_{}qb_delta_{}_J".format(self.nsites, delta, J))
 
         super(HeisenbergXYZ, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
 

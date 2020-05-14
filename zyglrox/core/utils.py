@@ -66,7 +66,7 @@ def partial_trace(psi: tf.Tensor, keep: list, dims: list) -> tf.Tensor:
 
     Args:
         *psi (tensor)*:
-            Vector to use for outer product
+            Quantum state of shape (None ,2,2,...,2), where None is a batch dimension.
 
         *keep (list)*:
             An array of indices of the spaces to keep after being traced. For instance, if the space is
@@ -74,7 +74,7 @@ def partial_trace(psi: tf.Tensor, keep: list, dims: list) -> tf.Tensor:
 
         *dims (list)*:
             An array of the dimensions of each space. For instance, if the space is A x B x C x D,
-             dims = [dim_A, dim_B, dim_C, dim_D]
+             dims = [None, dim_A, dim_B, dim_C, dim_D]. None is used as a batch dimension.
 
     Returns (Tensor):
         Partially traced out matrix
