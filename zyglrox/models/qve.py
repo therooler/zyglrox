@@ -104,7 +104,7 @@ class QuantumVariationalEigensolver(object):
         self.TRAIN = False
         self.thermal = kwargs.pop('thermal', False)
         if not self.thermal:
-            assert self.hamiltonian.nsites == self.qc.nqubits, "hamiltonian defined for {}, but quantum circuit has only {} qubits".format(
+            assert self.hamiltonian.nsites == self.qc.nqubits, "hamiltonian defined for {}, but quantum circuit has {} qubits".format(
                 self.hamiltonian.nsites, self.qc.nqubits)
         self.epsilon = kwargs.get("epsilon", 0.05)
         self.ngpus = self.qc.ngpus
@@ -207,54 +207,69 @@ class QuantumVariationalEigensolver(object):
         if self.load_model:
             out = self.saver.restore(self.qc._sess, self.tfcheckpoint_path + self.model_name)
             print("Loaded model from {}".format(out))
-            
-    def train(self, epochs=1000, tol=1e-8, fetch_from_graph={}) -> np.ndarray:
+
+    def train(self, max_iter: int = 1000, tol: float = 1e-8, fetch_from_graph={},
+              sc_method: str = 'single') -> np.ndarray:
         r"""
         Train the quantum variational eigensolver. We minimize the energy :math:`\langle H \rangle_\theta` as defined above.
 
         Args:
-            *epochs (int)*:
+            *max_iter (int)*:
                 Number of max iterations for the training algorithm.
 
             *tol (float)*:
                 Tolerance on the energy. If the absolute difference between iterations is smaller than this value, training stops.
 
+            *fetch_from_graph (dict)*:
+                Tolerance on the energy. If the absolute difference between iterations is smaller than this value, training stops.
+
+            *sc_method (str)*:
+                Method for stopping criterion.
+
         Returns expvals (np.ndarray):
             Expectation values after training is complete.
 
         """
+        if sc_method == 'single':
+            stopping_criterion = lambda x, y: np.abs(y - x) < tol
+        elif sc_method == 'hamiltonian':
+            stopping_criterion = lambda x, y: np.abs(x - self.hamiltonian.energies[0]) < tol
+        else:
+            raise NotImplementedError("{} is not a valid stopping criterion".format(sc_method))
+
         self.TRAIN = True
         self.CONVERGED = False
         self.energy_per_epoch = []
-        self.epochs_converged = epochs
+        self.epochs_converged = max_iter
+
         expvals = None
-        energy_buffer = np.zeros(11)
-        for ep in range(epochs):
+        energy_buffer = 0
+        for ep in range(max_iter):
             if self.feed_in_hamiltonian_terms:
                 expvals, energy, _ = self.qc._sess.run([self.expvals, self.energy, self.train_step], feed_dict={
                     self.hamiltonian_terms_feed: self.hamiltonian_terms.flatten()})
             else:
-                expvals, energy, _ = self.qc._sess.run([self.expvals, self.energy, self.train_step])
+                energy, _ = self.qc._sess.run([self.energy, self.train_step])
             self.energy_per_epoch.append(energy)
 
-            energy_buffer[ep % 11] = energy
             if not (ep % 50):
                 if self.save_model:
                     out = self.saver.save(self.qc._sess, self.tfcheckpoint_path)
                     if self.verbose:
                         print("Model saved in {}".format(out))
                 print("\n\tQVE Epoch {}: \t Energy : {}".format(ep, energy))
-            if not ep % 11:
-                if np.abs(energy_buffer[0] - energy_buffer[10]) < tol:
+            if not (ep + 1) % 25:
+                if stopping_criterion(energy, energy_buffer):
                     if self.verbose:
                         print("Converged after {} epochs \n".format(ep))
                     self.CONVERGED = True
                     self.epochs_converged = ep
                     break
+            energy_buffer = energy
 
         return expvals
 
-    def get_convergence(self, plot=True) -> Union[float, None]:
+    def get_convergence(self, plot=False) -> Union[float, None]:
         r"""
         Plot the energy at each epoch. If the argument `exact=True` was passed to the``QuantumVariationalEigensolverGradFree`` constructor we also
         calculates the residual energy :math:`\epsilon_{\text{res}} = |\text{min}(E_{qc} - E_{gs_wavefunction})|`. Otherwise returns None
