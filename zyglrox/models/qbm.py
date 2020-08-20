@@ -109,7 +109,7 @@ class QuantumBoltzmannMachine():
         for i in range(epochs_qbm):
             print("\nQBM Epoch {}".format(i))
             print("-------------------------")
-            evals = self.qve.train(tol=tol_qve, epochs=epochs_qve)
+            evals = self.qve.train(tol=tol_qve, max_iter=epochs_qve)
             evals = evals.flatten()
             total_grad = 0
             j=0
