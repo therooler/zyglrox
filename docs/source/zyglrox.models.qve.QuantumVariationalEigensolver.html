@@ -222,11 +222,11 @@ Will throw an error if the number of qubits is larger than 18.</p>
 </dl>
 <dl class="method">
 <dt id="zyglrox.models.qve.QuantumVariationalEigensolver.train">
-<code class="sig-name descname">train</code><span class="sig-paren">(</span><em class="sig-param">epochs=1000</em>, <em class="sig-param">tol=1e-08</em>, <em class="sig-param">fetch_from_graph={}</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#zyglrox.models.qve.QuantumVariationalEigensolver.train" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">train</code><span class="sig-paren">(</span><em class="sig-param">max_iter=1000</em>, <em class="sig-param">tol=1e-08</em>, <em class="sig-param">fetch_from_graph={}</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#zyglrox.models.qve.QuantumVariationalEigensolver.train" title="Permalink to this definition">¶</a></dt>
 <dd><p>Train the quantum variational eigensolver. We minimize the energy <span class="math notranslate nohighlight">\(\langle H \rangle_\theta\)</span> as defined above.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
-<dt><em>epochs (int)</em>:</dt><dd><p>Number of max iterations for the training algorithm.</p>
+<dt><em>max_iter (int)</em>:</dt><dd><p>Number of max iterations for the training algorithm.</p>
 </dd>
 <dt><em>tol (float)</em>:</dt><dd><p>Tolerance on the energy. If the absolute difference between iterations is smaller than this value, training stops.</p>
 </dd>
@@ -239,7 +239,7 @@ Will throw an error if the number of qubits is larger than 18.</p>
 
 <dl class="method">
 <dt id="zyglrox.models.qve.QuantumVariationalEigensolver.get_convergence">
-<code class="sig-name descname">get_convergence</code><span class="sig-paren">(</span><em class="sig-param">plot=True</em><span class="sig-paren">)</span> &#x2192; Optional[float]<a class="headerlink" href="#zyglrox.models.qve.QuantumVariationalEigensolver.get_convergence" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_convergence</code><span class="sig-paren">(</span><em class="sig-param">plot=False</em><span class="sig-paren">)</span> &#x2192; Optional[float]<a class="headerlink" href="#zyglrox.models.qve.QuantumVariationalEigensolver.get_convergence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the energy at each epoch. If the argument <cite>exact=True</cite> was passed to the``QuantumVariationalEigensolverGradFree`` constructor we also
 calculates the residual energy <span class="math notranslate nohighlight">\(\epsilon_{\text{res}} = |\text{min}(E_{qc} - E_{gs_wavefunction})|\)</span>. Otherwise returns None</p>
 <dl class="simple">
