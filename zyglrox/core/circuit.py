@@ -31,7 +31,7 @@ class QuantumCircuit:
     def __init__(self, nqubits: int, gates: List, tensorboard=False, **kwargs):
         """
         This class is an interface to build quantum circuits using TensorFlow. On initialization, the graph for the circuit is constructed.
-        The circuit is defined by passing a list of ``Gate`` objects, and setting the measurement of observables through the method ``set_expval``.
+        The circuit is defined by passing a list of ``Gate`` objects.
 
         Args:
             *nqubits (int)*:
