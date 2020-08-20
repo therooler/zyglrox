@@ -50,7 +50,7 @@ def Newton(loss, vrs, optimizer=None):
         return optimizer.apply_gradients(zip(grads, vrs))
 
 
-def ImaginaryTimeEvolution(state, loss, vrs, optimizer=None, stability_shift=None):
+def ImaginaryTimeEvolution(state, loss, vrs, optimizer=None, stability_shift=None, learning_rate=0.01):
     """
     Implementation of the imaginary time evolution gradient method
 
@@ -72,7 +72,7 @@ def ImaginaryTimeEvolution(state, loss, vrs, optimizer=None, stability_shift=Non
 
     """
     if optimizer == None:
-        optimizer = tf.train.GradientDescentOptimizer(0.01)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
     for variable in vrs:
         variable = [variable]
         jac, nparams = prepGeometricTensor(state, variable)
