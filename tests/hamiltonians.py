@@ -11,14 +11,14 @@ def kagome():
     h = Hamiltonian(topology=model_graph, interactions=inter, model_parameters={'zz': 1, 'x': 4})
     ts = h.get_hamiltonian_terms()
     obs = h.get_observables()
-    h.plot_lattice()
+    h.draw_lattice()
     h.get_hamiltonian()
 
 
 def standard_topologies():
     h = TFI(topology='line', g=1.5, boundary_conditions='closed', L=8)
     # h.plot_lattice()
-    h.plot_color_lattice()
+    h.draw_color_lattice()
     h.get_hamiltonian()
 
 
@@ -44,7 +44,7 @@ def kagome_torus_gs_2():
     h = Hamiltonian(topology=model_graph, interactions=inter, model_parameters={'xx': 1, 'yy': 1},
                     name='Kagome_torus_xxx', k=50)
 
-    h.plot_color_lattice()
+    h.draw_color_lattice()
     h.get_hamiltonian()
 
 
@@ -69,8 +69,8 @@ def kagome_18b():
     model_graph = graph_kagome_18b()
 
     h = HeisenbergXXZ(topology=model_graph, delta=1.0, name='Kagome_torus_xxy_18', k=50, )
-    h.plot_lattice()
-    h.plot_color_lattice()
+    h.draw_lattice()
+    h.draw_color_lattice()
     plt.show()
 
 
@@ -78,8 +78,8 @@ def kagome_18b_torus():
     model_graph = graph_kagome_18b_torus()
 
     h = HeisenbergXXZ(topology=model_graph, delta=1.0, name='Kagome_torus_xxy_18', k=50, )
-    h.plot_lattice()
-    h.plot_color_lattice()
+    h.draw_lattice()
+    h.draw_color_lattice()
     plt.show()
 
 
@@ -88,8 +88,8 @@ def kagome_27():
 
     h = HeisenbergXXZ(topology=model_graph, delta=1.0, name='Kagome_torus_xxy_18', k=50)
     positions = graph_kagome_27()
-    h.plot_lattice(pos=positions)
-    h.plot_color_lattice(pos=positions)
+    h.draw_lattice(pos=positions)
+    h.draw_color_lattice(pos=positions)
     plt.show()
     #
     #
@@ -105,8 +105,8 @@ def kagome_27_torus():
                    16: [[16, 14], [16, 15], [16, 0], [16, 3]], 17: [[17, 14], [17, 13], [17, 1], [17, 0]]}
 
     h = HeisenbergXXZ(topology=model_graph, delta=1.0, name='Kagome_torus_xxy_18', k=50, )
-    h.plot_lattice()
-    h.plot_color_lattice()
+    h.draw_lattice()
+    h.draw_color_lattice()
     plt.show()
 
 

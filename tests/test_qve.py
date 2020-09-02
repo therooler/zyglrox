@@ -24,7 +24,7 @@ def test_bare_qve_example():
     qc = QuantumCircuit(N, gates=gates, tensorboard=True)
     qve = QuantumVariationalEigensolver(ham, qc, exact=True)
     qc.circuit.summary()
-    qve.train(epochs=epochs, tol=tol)
+    qve.train(max_iter=epochs, tol=tol)
 
     qve.get_convergence()
     qve.get_statistics()
