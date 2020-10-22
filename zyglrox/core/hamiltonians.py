@@ -985,6 +985,8 @@ class QuantumBoltzmann(Hamiltonian):
 
         topology = fully_connected(L)
         topology = remove_double_counting(topology)
+        all_edges = {tuple(sorted(x)) for y in topology.values() for x in y}
+        self.nsites = max(all_edges, key=itemgetter(1))[1] + 1
         np.random.seed(seed)
 
         # Heisenberg XYZ model #
@@ -992,7 +994,7 @@ class QuantumBoltzmann(Hamiltonian):
         interactions = {'xx': topology, 'yy': topology, 'zz': topology,
                         'x': mag_field, 'y': mag_field, 'z': mag_field}
         links = [tuple(y) for x in topology.values() for y in x]
-        sites = [(s,) for s in topology.keys()]
+        sites = [(s,) for s in range(self.nsites)]
         random_xx = dict(zip(links, np.random.randn(len(links))))
         random_yy = dict(zip(links, np.random.randn(len(links))))
         random_zz = dict(zip(links, np.random.randn(len(links))))
@@ -1009,9 +1011,8 @@ class QuantumBoltzmann(Hamiltonian):
         assert len(interactions) == len(
             model_parameters), "The number of interactions and model_parameters is not the same, received".format(
             interactions.keys(), model_parameters.keys())
-        all_edges = {tuple(sorted(x)) for y in topology.values() for x in y}
-        self.nsites = max(all_edges, key=itemgetter(1))[1] + 1
-        name = kwargs.pop('name', "QBM_{}_spins__seed_{}".format(self.nsites, seed))
+
+        name = kwargs.pop('name', "QBM_{}_spins_seed_{}".format(self.nsites, seed))
 
         super(QuantumBoltzmann, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
 
