@@ -117,7 +117,7 @@ def custom_cnot(locs: List):
     return gates
 
 
-def tfi_1d_hva_circuit(N: int, depth: int, initial_parameters):
+def tfi_1d_hva_circuit(N: int, depth: int, initial_parameters, boundary_condition: str):
     verify_circuit_input(N, depth, initial_parameters, (2, depth))
 
     parameters = tf.Variable(initial_parameters,
@@ -132,27 +132,84 @@ def tfi_1d_hva_circuit(N: int, depth: int, initial_parameters):
         for j in range(1, N - 1, 2):
             gates.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
 
-        gates.append(ZZ(wires=[N - 1, 0], value=parameters[0, l]))
+        if boundary_condition=='closed':
+            gates.append(ZZ(wires=[N - 1, 0], value=parameters[0, l]))
+        # elif boundary_condition=='open':
         gates.extend([RX(wires=[i, ], value=parameters[1, l]) for i in range(N)])
     return gates
 
 
-def tfi_2d_hva_circuit(N: int, depth: int, edge_coloring: dict, initial_parameters):
+def xy_1d_hva_alt_circuit(N: int, depth: int, initial_parameters, boundary_condition):
+    verify_circuit_input(N, depth, initial_parameters, (5, depth))
+
     parameters = tf.Variable(initial_parameters,
                              constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
     gates = []
 
-    gates.extend([Hadamard(wires=[i]) for i in range(N)])
+    # gates.extend([Hadamard(wires=[i, ]) for i in range(N)])
+    for l in range(depth):
+        for j in range(0, N - 1, 2):
+            gates.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
+            gates.append(YY(wires=[j, j + 1], value=parameters[1, l]))
+
+        for j in range(1, N - 1, 2):
+            gates.append(ZZ(wires=[j, j + 1], value=parameters[2, l]))
+            gates.append(YY(wires=[j, j + 1], value=parameters[3, l]))
+        if boundary_condition=='closed':
+            gates.append(ZZ(wires=[N - 1, 0], value=parameters[2, l]))
+            gates.append(YY(wires=[N - 1, 0], value=parameters[3, l]))
+
+        gates.extend([RX(wires=[i, ], value=parameters[4, l]) for i in range(N)])
+    return gates
+
+
+def xy_1d_hva_circuit(N: int, depth: int, initial_parameters, boundary_condition):
+    verify_circuit_input(N, depth, initial_parameters, (3, depth))
+
+    parameters = tf.Variable(initial_parameters,
+                             constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
+    gates = []
+
+    # gates.extend([Hadamard(wires=[i, ]) for i in range(N)])
+    for l in range(depth):
+        for j in range(0, N - 1, 2):
+            gates.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
+            gates.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
+
+        if boundary_condition=='closed':
+            gates.append(ZZ(wires=[N - 1, 0], value=parameters[0, l]))
+
+        for j in range(0, N - 1, 2):
+            gates.append(YY(wires=[j, j + 1], value=parameters[1, l]))
+            gates.append(YY(wires=[j, j + 1], value=parameters[1, l]))
+
+        if boundary_condition=='closed':
+            gates.append(YY(wires=[N - 1, 0], value=parameters[1, l]))
+
+        gates.extend([RX(wires=[i, ], value=parameters[2, l]) for i in range(N)])
+    return gates
+
+def tfi_2d_hva_circuit(N: int, depth: int, edge_coloring: dict, initial_parameters, f_or_af: 'f'):
+    parameters = tf.Variable(initial_parameters,
+                             constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
+    gates = []
+    print(list(edge_coloring.values()))
+    if f_or_af== 'f':
+        gates.extend([Hadamard(wires=[i]) for i in range(N)])
+    elif f_or_af=='af':
+        for edge in list(edge_coloring.values())[-1]:
+            gates.append(PauliX(wires=[edge[0]]))
 
     for d in range(depth):
         for alpha, graph in enumerate(edge_coloring.values()):
+            print([edge for edge in graph])
             gates.extend([ZZ(wires=edge, value=parameters[0, d]) for edge in graph])
         gates.extend([RX(wires=[i], value=parameters[1, d]) for i in range(N)])
 
     return gates
 
 
-def xxz_1d_hva_circuit(N: int, depth: int, initial_parameters):
+def xxz_1d_hva_circuit(N: int, depth: int, initial_parameters, boundary_condition):
     verify_circuit_input(N, depth, initial_parameters, (2, 2, depth))
     parameters = tf.Variable(initial_parameters,
                              constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
@@ -168,14 +225,54 @@ def xxz_1d_hva_circuit(N: int, depth: int, initial_parameters):
             gates.append(ZZ(wires=[j, j + 1], value=parameters[0, 0, l]))
             gates.append(YY(wires=[j, j + 1], value=parameters[0, 1, l]))
             gates.append(XX(wires=[j, j + 1], value=parameters[0, 1, l]))
-        gates.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
-        gates.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
-        gates.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
+        if boundary_condition == 'closed':
+            gates.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
+            gates.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
+            gates.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
 
         for j in range(0, N - 1, 2):
             gates.append(ZZ(wires=[j, j + 1], value=parameters[1, 0, l]))
             gates.append(YY(wires=[j, j + 1], value=parameters[1, 1, l]))
             gates.append(XX(wires=[j, j + 1], value=parameters[1, 1, l]))
+
+    return gates
+
+
+def xxz_1d_perm_hva_circuit(N: int, depth: int, initial_parameters, boundary_condition, permutation):
+    verify_circuit_input(N, depth, initial_parameters, (2, 2, depth))
+    parameters = tf.Variable(initial_parameters,
+                             constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
+    gates = []
+    for i in range(0, N - 1, 2):
+        gates.append(PauliX(wires=[i]))
+        gates.append(PauliX(wires=[i + 1]))
+        gates.append(Hadamard(wires=[i]))
+        gates.append(CNOT(wires=[i, i + 1]))
+
+    for l in range(depth):
+        for layer_number in range(4):
+            if permutation[l*4+layer_number] == 2:
+                for j in range(1, N - 1, 2):
+                    gates.append(ZZ(wires=[j, j + 1], value=parameters[0, 0, l]))
+                if boundary_condition == 'closed':
+                    gates.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
+
+            elif permutation[l*4+layer_number] == 3:
+                for j in range(1, N - 1, 2):
+                    gates.append(YY(wires=[j, j + 1], value=parameters[0, 1, l]))
+                    gates.append(XX(wires=[j, j + 1], value=parameters[0, 1, l]))
+                if boundary_condition == 'closed':
+                    gates.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
+                    gates.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
+
+            elif permutation[l*4+layer_number] == 0:
+                for j in range(0, N - 1, 2):
+                    gates.append(ZZ(wires=[j, j + 1], value=parameters[1, 0, l]))
+
+            elif permutation[l*4+layer_number] == 1:
+                for j in range(0, N - 1, 2):
+                    gates.append(YY(wires=[j, j + 1], value=parameters[1, 1, l]))
+                    gates.append(XX(wires=[j, j + 1], value=parameters[1, 1, l]))
 
     return gates
 
@@ -207,14 +304,43 @@ def kitaev_honeycomb_circuit(depth: int, edge_coloring: dict, initial_parameters
     gates = []
     print(edge_coloring)
     # prepare ground state here
-    for edge in edge_coloring['yy']:
+    # for edge in edge_coloring['zz']:
         # Bellstates
-        gates.append(PauliX(wires=[edge[0]]))
-        gates.append(PauliX(wires=[edge[1]]))
-        gates.append(Hadamard(wires=[edge[0]]))
-        gates.append(CNOT(wires=[edge[0], edge[1]]))
+        # gates.append(PauliX(wires=[edge[0]]))
+        # gates.append(PauliX(wires=[edge[1]]))
+        # gates.append(Hadamard(wires=[edge[0]]))
+        # gates.append(CNOT(wires=[edge[0], edge[1]]))
 
-    parameters = tf.Variable(tf.constant(initial_parameters, TF_FLOAT_DTYPE),
+    parameters = tf.Variable(initial_parameters,
+                             constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
+
+    for d in range(depth):
+        for interaction in ['zz', 'yy', 'xx']:
+            graph = edge_coloring[interaction]
+            if interaction == 'xx':
+                gates.extend([XX(wires=edge, value=parameters[0, d]) for edge in graph])
+            if interaction == 'yy':
+                gates.extend([YY(wires=edge, value=parameters[1, d]) for edge in graph])
+            if interaction == 'zz':
+                gates.extend([ZZ(wires=edge, value=parameters[2, d]) for edge in graph])
+    return gates
+
+
+def kitaev_ladder_circuit(depth: int, edge_coloring: dict, initial_parameters: np.ndarray):
+    gates = []
+    # max_site = max(max(i,j) for i,j in edge_coloring['zz'])
+    # for edge in edge_coloring['xx']:
+    #     print(edge)
+    #     gates.append(PauliX(wires=[edge[0]]))
+    #     gates.append(Hadamard(wires=[edge[0]]))
+    #     gates.append(CNOT(wires=[edge[0], edge[1]]))
+    for edge in edge_coloring['yy']:
+        gates.append(PauliX(wires=[edge[0]]))
+        print(edge)
+        # gates.append(Hadamard(wires=[edge[0]]))
+        # gates.append(Hadamard(wires=[edge[0]]))
+        gates.append(CNOT(wires=[edge[0], edge[1]]))
+    parameters = tf.Variable(initial_parameters,
                              constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
 
     for d in range(depth):

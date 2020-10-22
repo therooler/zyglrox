@@ -45,7 +45,7 @@ def graph_kagome_18b(boundary_condition='open'):
                        14: [[14, 13], [14, 15], [14, 16], [14, 17]], 15: [[15, 10], [15, 14], [15, 16]],
                        16: [[16, 14], [16, 15]], 17: [[17, 14], [17, 13]]}
         return model_graph
-    if boundary_condition == 'closed':
+    if boundary_condition == 'torus':
         model_graph = {0: [[0, 1], [0, 3], [0, 16], [0, 17]], 1: [[1, 0], [1, 2], [1, 4], [1, 17]],
                        2: [[2, 1], [2, 3], [2, 4], [2, 5]], 3: [[3, 2], [3, 5], [3, 0], [3, 16]],
                        4: [[4, 1], [4, 2], [4, 6], [4, 7]], 5: [[5, 3], [5, 2], [5, 9], [5, 6]],
@@ -129,6 +129,49 @@ def graph_honeycomb_16(link=None):
                     8: [[8, 12]], 13: [[13, 1]], 10: [[10, 14]], 15: [[15, 3]]}
         else:
             raise ValueError('Link must be xx, yy or zz')
+
+
+def graph_ladder(L: int, link=None, boundary_condition='open'):
+    topology = {}
+    if boundary_condition == 'closed':
+        assert L / 2 == L // 2, f"L must be even, found {L}"
+    if link == None:
+        for i in range(0, 2 * L - 2, 2):
+            topology[i] = [[i, i + 1], [i, i + 2]]
+            topology[i + 1] = [[i + 1, i], [i + 1, i + 3]]
+        topology[2 * L - 1] = [[2 * L - 1, 2 * L - 2]]
+        if boundary_condition == 'closed':
+            topology[2 * L - 1].append([2 * L - 1, 1])
+            topology[2 * L - 2] = [[2 * L - 2, 0]]
+        return topology
+    else:
+        if link == 'zz':  # rungs
+            for i in range(0, 2 * L - 2, 2):
+                topology[i] = [[i, i + 1], ]
+            topology[2 * L - 1] = [[2 * L - 1, 2 * L - 2]]
+            return topology
+
+        if link == 'yy':  # green
+            for i in range(3, 2 * L - 2, 4):
+                topology[i] = [[i, i + 2], ]
+            for i in range(0, 2 * L - 1, 4):
+                topology[i] = [[i, i + 2], ]
+            if boundary_condition == 'closed':
+                topology[2 * L - 1] = [[2 * L - 1, 1]]
+
+            return topology
+
+        elif link == 'xx':  # blue
+            for i in range(2, 2 * L - 2, 4):
+                topology[i] = [[i, i + 2], ]
+            for i in range(1, 2 * L - 1, 4):
+                topology[i] = [[i, i + 2], ]
+            if boundary_condition == 'closed':
+                topology[2 * L - 2] = [[2 * L - 2, 0]]
+
+            return topology
+        else:
+            raise ValueError('Link must be xx or zz')
 
 
 def graph_honeycomb_13():

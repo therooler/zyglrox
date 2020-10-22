@@ -240,7 +240,7 @@ class QuantumCircuit:
         else:
             return self.circuit(inputs, training)
 
-    def set_parameters(self, theta):
+    def  set_parameters(self, theta):
         """
         Set the parameters of the quantum circuit by an external input. Also works for batches of parameters
         if the QuantumCircuit has been initialized with batch_params=True.

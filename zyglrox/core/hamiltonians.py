@@ -225,7 +225,7 @@ class Hamiltonian(object):
         if not os.path.exists(self.filepath + self.name + 'energy.npy'):
             if self.H is None:
                 self._build_hamiltonian()
-            if not os.path.exists(self.filepath + self.name ):
+            if not os.path.exists(self.filepath + self.name):
                 os.mkdir(self.filepath + self.name)
             print("File " + self.filepath + self.name + "H.npz"
                   + " not found, creating and saving Hamiltonian...")
@@ -420,7 +420,7 @@ class TFI(Hamiltonian):
 
         .. math::
 
-            H = -\sum_{<i,j>}^N  z^{ij} \sigma_{i}^{z}\sigma_{j}^{z} - g \sum_{i}^N \sigma_{i}^{x}
+            H = -\sum_{<i,j>}^N \sigma_{i}^{z}\sigma_{j}^{z} - g \sum_{i}^N \sigma_{i}^{x}
 
         with :math:`N` the number of spins. This function takes kwargs ``L`` and ``M`` that can be used to specify the
         size of the standard topologies ['line', 'rect_lattice'].
@@ -469,6 +469,65 @@ class TFI(Hamiltonian):
         model_parameters = {**model_parameters, **additional_model_parameters}
 
         super(TFI, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
+
+
+class XY(Hamiltonian):
+    def __init__(self, topology: Union[dict, str], g: float = 1.0, gamma: float = 1.0, **kwargs):
+        r"""
+        The XY model with transverse field is given by the Hamiltonian
+
+        .. math::
+
+            H = -\sum_{<i,j>}^N \left( \frac{1+\gamma}{2} \sigma_{i}^{z}\sigma_{j}^{z} +
+            \frac{1-\gamma}{2} \sigma_{i}^{z}\sigma_{j}^{z} \right) - g \sum_{i}^N \sigma_{i}^{z}
+
+        with :math:`N` the number of spins. This function takes kwargs ``L`` and ``M`` that can be used to specify the
+        size of the standard topologies ['line', 'rect_lattice'].
+
+        Args:
+            *topology (dict, str)*:
+                A dict with nodes as keys and a list of edges as values or a string defining a standard topology
+
+            *g (float)*:
+                order parameter for the transverse field Ising-model
+
+            *\*\*kwargs*:
+                Additional arguments.
+
+        Returns (inplace):
+            None
+
+        """
+        assert isinstance(topology,
+                          (dict, str)), "Topology must be a string or a dict, received object of type {}".format(
+            type(topology))
+
+        if isinstance(topology, str):
+            assert 'L' in kwargs.keys(), "If topology is a string, the lattice or line size 'L' must be supplied as a kwarg"
+            L = kwargs.pop('L')
+            topology = standard_topologies(L, topology=topology, **kwargs)
+
+        # TFI model #
+        topology = remove_double_counting(topology)
+        interactions = {'xx': topology, 'yy': topology, 'z': magnetic_field_interaction(topology)}
+        f_or_af = kwargs.pop('f_or_af', 'f')
+        all_edges = {tuple(sorted(x)) for y in topology.values() for x in y}
+        self.nsites = max(all_edges, key=itemgetter(1))[1] + 1
+        name = kwargs.pop('name', "XY_{}qb_gamma_{:.2f}_g_{:.2f}".format(self.nsites, gamma, g))
+        if f_or_af == 'f':
+            model_parameters = {'xx': -(1.0 - gamma) / 2, 'yy': -(1.0 + gamma) / 2, 'z': -g}
+        else:
+            model_parameters = {'xx': (1.0 - gamma) / 2, 'yy': (1.0 + gamma) / 2, 'z': g}
+        if 'boundary_conditions' in kwargs.keys():
+            name = name + '_' + kwargs['boundary_conditions'] + '_' + f_or_af
+        else:
+            name = name + '_' + f_or_af
+        additional_interactions = kwargs.pop("additional_interactions", {})
+        additional_model_parameters = kwargs.pop("additional_model_parameters", {})
+        interactions = {**interactions, **additional_interactions}
+        model_parameters = {**model_parameters, **additional_model_parameters}
+
+        super(XY, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
 
 
 class HeisenbergXXX(Hamiltonian):
@@ -716,6 +775,67 @@ class KitaevHoneycomb(Hamiltonian):
         model_parameters = {**model_parameters, **additional_model_parameters}
 
         super(KitaevHoneycomb, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
+
+
+class KitaevLadder(Hamiltonian):
+    def __init__(self, L, Jxx, Jyy, Jzz, f_or_af, **kwargs):
+        r"""
+        The Kitaev Honeycomb model is given by the Hamiltonian
+
+        .. math::
+
+            H = -\sum_{<i,j>}^N J_{xx}\sigma_{i}^{x}\sigma_{j}^{x} - J_{yy}\sigma_{i}^{y}\sigma_{j}^{y}
+            - J_{zz}\sigma_{i}^{z}\sigma_{j}^{z}
+
+        with :math:`N` the number of spins.
+
+        Args:
+            *L (int)*:
+                L defines the number of spins in the honeycomb. Supported topologies exist for L=10,13
+
+            *Jxx (float)*:
+                The order parameter controlling the strength of the :math:`X-X` interactions.
+
+            *Jyy (float)*:
+                The order parameter controlling the strength of the :math:`Y-Y` interactions.
+
+            *Jzz (float)*:
+                The order parameter controlling the strength of the :math:`Z-Z` interactions.
+
+            *\*\*kwargs*:
+                Additional arguments.
+
+        Returns (inplace):
+            None
+
+        """
+
+        topology = graph_ladder(L, boundary_condition=kwargs['boundary_conditions'])
+        interactions = {'xx': graph_ladder(L, 'xx', kwargs['boundary_conditions']),
+                        'yy': graph_ladder(L, 'yy', kwargs['boundary_conditions']),
+                        'zz': graph_ladder(L, 'zz', kwargs['boundary_conditions'])}
+
+        topology = remove_double_counting(topology)
+        all_edges = {tuple(sorted(x)) for y in topology.values() for x in y}
+        self.nsites = max(all_edges, key=itemgetter(1))[1] + 1
+        name = kwargs.pop('name',
+                          "Kitaev_honeycomb_{}qb_Jaa_{:1.2f}_{:1.2f}".format(self.nsites, Jxx, Jzz))
+
+        if f_or_af == 'f':
+            model_parameters = {'xx': -Jxx, 'yy': -Jyy, 'zz': -Jzz}
+        else:
+            model_parameters = {'xx': Jxx, 'yy': Jyy, 'zz': Jzz}
+        if 'boundary_conditions' in kwargs.keys():
+            name = name + '_' + kwargs['boundary_conditions'] + '_' + f_or_af
+        else:
+            name = name + '_' + f_or_af
+
+        additional_interactions = kwargs.pop("additional_interactions", {})
+        additional_model_parameters = kwargs.pop("additional_model_parameters", {})
+        interactions = {**interactions, **additional_interactions}
+        model_parameters = {**model_parameters, **additional_model_parameters}
+
+        super(KitaevLadder, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
 
 
 class HeisenbergXYZ(Hamiltonian):
@@ -974,6 +1094,7 @@ def remove_double_counting(g: dict) -> dict:
         single_edge_g[k] = [list(x) for x in all_edges if x[0] == k]
     return single_edge_g
 
+
 def fully_connected(L: int) -> dict:
     r"""
     Get a fully connected graph :math:`\mathcal{G}:=(N, G)` of L vertices.
@@ -1006,7 +1127,7 @@ def standard_topologies(L, topology: str, **kwargs) -> dict:
     Returns (dict):
         A dict with nodes as keys and a list of edges as values.
     """
-    assert topology in ['line', 'rect_lattice'], "topology must be 'line', 'rect_lattice', received".format(
+    assert topology in ['line', 'rect_lattice'], "topology must be 'line', 'rect_lattice', received {}".format(
         topology)
     top = {}
     M = kwargs.pop("M", L)
@@ -1062,5 +1183,5 @@ def magnetic_field_interaction(topology):
     """
     # Since we order the interactions from small vertex to large vertex, the largerst vertex will not show up in the
     # keys() dict, which is why we add it here.
-    sites = list(topology.keys()) + [max(topology.keys())+1]
+    sites = list(topology.keys()) + [max(topology.keys()) + 1]
     return dict(zip(sites, [[[k]] for k in sites]))
