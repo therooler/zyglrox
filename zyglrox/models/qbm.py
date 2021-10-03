@@ -106,6 +106,7 @@ class QuantumBoltzmannMachine():
         """
         self.total_grad_per_epoch = []
         self.TRAIN = True
+
         for i in range(epochs_qbm):
             print("\nQBM Epoch {}".format(i))
             print("-------------------------")
@@ -129,6 +130,7 @@ class QuantumBoltzmannMachine():
                 break
             self.qve.hamiltonian_terms = self.qve.hamiltonian.get_hamiltonian_terms()
             self.qc._sess.run([tf.compat.v1.global_variables_initializer()])
+
 
     def plot(self):
         r"""

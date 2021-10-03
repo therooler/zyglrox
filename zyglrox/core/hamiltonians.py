@@ -254,7 +254,7 @@ class Hamiltonian(object):
             self.groundstates = np.load(self.filepath + self.name + "groundstate.npy")
             self.gs = self.groundstates[:, 0]
 
-            print("Ground state energies = {}".format(self.energies))
+            print("Ground state energies = {}".format(self.energies[0]))
 
     @staticmethod
     def _find_degeneracy(E: np.ndarray) -> int:
@@ -293,7 +293,7 @@ class Hamiltonian(object):
 
         # the hamiltonian has shape 2^N x 2^N
         self.H = scipy.sparse.csr_matrix((int(2 ** self.nsites),
-                                          (int(2 ** self.nsites))), dtype=np.complex)
+                                          (int(2 ** self.nsites))), dtype=complex)
 
         for interaction, graph in self.interactions.items():
             for links in graph.values():

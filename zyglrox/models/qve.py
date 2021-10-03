@@ -262,6 +262,7 @@ class QuantumVariationalEigensolver(object):
                 if stopping_criterion(energy, energy_buffer):
                     if self.verbose:
                         print("Converged after {} epochs \n".format(ep))
+                        print(f"Final energy = {energy}")
                     self.CONVERGED = True
                     self.epochs_converged = ep
                     break

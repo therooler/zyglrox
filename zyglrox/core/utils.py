@@ -17,6 +17,9 @@ from tensorflow import Tensor
 import numpy as np
 from typing import Optional, Text, List, Union, Sequence, Tuple, Any
 import string
+from tensorflow.python.client import device_lib
+import copy
+
 
 def integer_generator(start):
     """
@@ -31,8 +34,9 @@ def integer_generator(start):
     """
     start -= 1
     while True:
-        start+=1
+        start += 1
         yield start
+
 
 def tf_kron(a: tf.Tensor, b: tf.Tensor) -> tf.Tensor:
     r"""
@@ -56,7 +60,7 @@ def tf_kron(a: tf.Tensor, b: tf.Tensor) -> tf.Tensor:
                       [a_shape[0] * b_shape[0], a_shape[1] * b_shape[1]])
 
 
-def partial_trace(psi: tf.Tensor, keep: list, dims: list) -> tf.Tensor:
+def partial_trace_np(psi: np.ndarray, keep: list, dims: list) -> np.ndarray:
     r"""
     Calculate the partial trace of an outer product
 
@@ -92,12 +96,52 @@ def partial_trace(psi: tf.Tensor, keep: list, dims: list) -> tf.Tensor:
     idx2 = letters[-1] + ''.join([letters[Ndim + i] if i in keep else letters[i] for i in range(1, Ndim)])
     idx_out = letters[-1] + ''.join(
         [i for i, j in zip(idx1, idx2) if i != j] + [j for i, j in zip(idx1, idx2) if i != j])
-    psi = tf.reshape(psi, dims)
+    psi = np.reshape(psi, dims)
+    rho_a = np.einsum(idx1 + ',' + idx2 + '->' + idx_out, psi, np.conj(psi))
+    return np.reshape(rho_a, (-1, Nkeep, Nkeep))
+
+
+def partial_trace(psi: tf.Tensor, keep: list, dims: list) -> tf.Tensor:
+    r"""
+    Calculate the partial trace of an outer product
+
+    .. math::
+
+	    \rho_a = \text{Tr}_b (| u \rangle \langle u |)
+
+    Args:
+        *psi (tensor)*:
+            Quantum state of shape (None ,2,2,...,2), where None is a batch dimension.
+
+        *keep (list)*:
+            An array of indices of the spaces to keep after being traced. For instance, if the space is
+            A x B x C x D and we want to trace out B and D, keep = [0,2]
+
+        *dims (list)*:
+            An array of the dimensions of each space. For instance, if the space is A x B x C x D,
+             dims = [None, dim_A, dim_B, dim_C, dim_D]. None is used as a batch dimension.
+
+    Returns (Tensor):
+        Partially traced out matrix
+
+    """
+    letters = string.ascii_lowercase[1:] + string.ascii_uppercase
+    keep = copy.copy([k + 1 for k in keep])
+    assert (len(letters) - 1) > (len(dims) - 1), "Not enough letters for einsum..."
+    keep = np.asarray(keep)
+    dims = np.asarray(dims)
+    Ndim = dims.size
+    Nkeep = np.prod(dims[keep])
+
+    idx1 = 'a' + ''.join([letters[i] for i in range(1, Ndim)])
+    idx2 = 'a' + ''.join([letters[Ndim + i] if i in keep else letters[i] for i in range(1, Ndim)])
+    idx_out = 'a' + ''.join(
+        [i for i, j in zip(idx1, idx2) if i != j] + [j for i, j in zip(idx1, idx2) if i != j])
     rho_a = tf.einsum(idx1 + ',' + idx2 + '->' + idx_out, psi, tf.math.conj(psi))
     return tf.reshape(rho_a, (-1, Nkeep, Nkeep))
 
 
-def von_neumann_entropy(rho: Union[tf.Tensor,np.ndarray]) -> Union[tf.Tensor,np.ndarray]:
+def von_neumann_entropy(rho: Union[tf.Tensor, np.ndarray]) -> Union[tf.Tensor, np.ndarray]:
     r"""
     Calculate the Von Neumann entropy of a reduced density matrix.
 
@@ -114,16 +158,59 @@ def von_neumann_entropy(rho: Union[tf.Tensor,np.ndarray]) -> Union[tf.Tensor,np.
 
     """
     if isinstance(rho, np.ndarray):
+        rho = rho.squeeze()
         lam = np.linalg.eigvalsh(rho)
-        lam = np.clip(tf.math.real(lam), 1e-8, 1e12)
-        return -np.sum(lam * np.log(lam), axis=1)
+        lam = np.clip(np.real(lam), 1e-8, 1e12)
+        return -np.sum(lam * np.log(lam))
     elif isinstance(rho, tf.Tensor):
+        rho = tf.squeeze(rho)
         lam = tf.linalg.eigvalsh(rho)
         lam = tf.clip_by_value(tf.math.real(lam), 1e-8, 1e12)
-        return -tf.reduce_sum(lam * tf.math.log(lam), axis=1)
+        return -tf.reduce_sum(lam * tf.math.log(lam))
     else:
         raise ValueError("rho must be a numpy array or tf.tensor, received {}".format(type(rho)))
 
+
+def logarithmic_negativity(rho: Union[tf.Tensor, np.ndarray]) -> Union[tf.Tensor, np.ndarray]:
+    r"""
+    Calculate the Von Neumann entropy of a reduced density matrix.
+
+    .. math::
+
+	    S(\rho) = -\text{Tr} \rho \log \rho
+
+    Args:
+        *red_rho (tensor)*:
+            Density matrix.
+
+    Returns (tensor):
+        Scalar containing the Von Neumann entropy.
+
+    """
+    shape = rho.shape
+
+    if isinstance(rho, np.ndarray):
+        N = int(np.log2(shape[-1]))
+        assert 2 ** N == shape[-1], f'Invalid rho shape {shape}'
+        rho_t = np.transpose(rho.reshape(*(2 ** (N // 2) for _ in range(4))), axes=[0, 3, 2, 1])
+        rho_t = rho_t.reshape((2 ** N, 2 ** N))
+        evals = np.linalg.eigvalsh(rho_t)
+        return np.log(1 + np.sum(np.abs(evals) - evals))
+    elif isinstance(rho, tf.Tensor):
+        N = int(np.log2(shape.as_list()[-1]))
+        assert 2 ** N == shape[-1], f'Invalid rho shape {shape}'
+        rho_t = tf.transpose(tf.reshape(rho, [2 ** (N // 2) for _ in range(4)]), perm=[0, 3, 2, 1])
+        rho_t = tf.reshape(rho_t, (2 ** N, 2 ** N))
+        evals = tf.math.real(tf.linalg.eigvalsh(rho_t))
+        return tf.math.log(1 + tf.reduce_sum(tf.abs(evals) - evals))
+    else:
+        raise ValueError("rho must be a numpy array or tf.tensor, received {}".format(type(rho)))
+
+
+def get_available_devices(device_type):
+    assert device_type in ['CPU', 'GPU'], f"device type must be 'CPU' or 'GPU', found {device_type}"
+    local_device_protos = device_lib.list_local_devices()
+    return [(x.name, int(x.name.split(':')[-1])) for x in local_device_protos if x.device_type == device_type]
 
 
 def renyi_entropy(rho: tf.Tensor, alpha: float = 0.5) -> tf.Tensor:
@@ -148,7 +235,7 @@ def renyi_entropy(rho: tf.Tensor, alpha: float = 0.5) -> tf.Tensor:
         lam = np.clip(tf.math.real(lam), 1e-8, 1e12)
         return (1 / (1 - alpha)) * np.log(np.sum(np.power(lam, alpha), axis=1))
     elif isinstance(rho, tf.Tensor):
-        lam  = tf.linalg.eigvalsh(rho)
+        lam = tf.linalg.eigvalsh(rho)
         lam = tf.clip_by_value(tf.math.real(lam), 1e-8, 1e12)
         return (1 / (1 - alpha)) * tf.math.log(tf.reduce_sum(tf.pow(lam, tf.constant(alpha, dtype=lam.dtype)), axis=1))
     else:

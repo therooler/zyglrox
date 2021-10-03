@@ -16,10 +16,10 @@ import tensorflow as tf
 from tensorflow.keras.layers import Layer
 
 import numpy as np
-from typing import List
+from typing import List, Tuple
 from zyglrox.core._config import TF_COMPLEX_DTYPE
 from zyglrox.core.gates import Gate
-from zyglrox.core.utils import integer_generator
+from zyglrox.core.utils import integer_generator, get_available_devices
 from zyglrox.core.draw import draw_circuit
 
 
@@ -66,10 +66,12 @@ class QuantumCircuit:
         self.ngpus = kwargs.pop('ngpus', 1)
         assert self.ngpus >= 1, "The number of gpus must be equal or larger than 1, received {}".format(self.ngpus)
         self.device = kwargs.pop('device', 'CPU')
+        assert self.device in ['CPU', 'GPU'], f'Device must be "CPU" or "GPU", received {self.device}'
         self.circuit_order = kwargs.pop('circuit_order', 'gate')
         self.get_phi_per_layer = kwargs.pop('get_phi_per_layer', False)
         assert self.circuit_order in ['gate', 'layer']
         self.device_number = kwargs.pop('device_number', 0)
+        assert isinstance(self.device_number, int), f'device_number must be and integer, received {self.device_number}'
         for g in gates:
             if g.nparams == 0:
                 self.ngates += 1
@@ -96,44 +98,53 @@ class QuantumCircuit:
             None
 
         """
+        available_cpus = [dev[0] for dev in get_available_devices('CPU')]
+        available_gpus = [dev[0] for dev in get_available_devices('GPU')]
+        if self.device=='GPU':
+            self.tf_device = available_gpus[self.device_number]
+            assert self.tf_device in available_gpus, f"device {self.tf_device} not in list of available GPU devices: {available_gpus}"
+        elif self.device=='CPU':
+            self.tf_device = available_cpus[self.device_number]
+            assert self.tf_device in available_cpus, f"device {self.tf_device} not in list of available CPU devices: {available_gpus}"
 
-        with tf.name_scope("phi"):
-            # initalize the zero quantum state with a constant tensor
-            self.phi = np.zeros((int(2 ** self.nqubits)))
-            self.phi[0] = 1
-            self.phi = tf.constant(self.phi, dtype=TF_COMPLEX_DTYPE, name='phi')
-            # reshape to multi-index form
-            self.phi = tf.reshape(self.phi, [1] + [2 for _ in range(self.nqubits)])
+        with tf.device(self.tf_device):
+            with tf.name_scope("phi"):
+                # initalize the zero quantum state with a constant tensor
+                self.phi = np.zeros((int(2 ** self.nqubits)))
+                self.phi[0] = 1
+                self.phi = tf.constant(self.phi, dtype=TF_COMPLEX_DTYPE, name='phi')
+                # reshape to multi-index form
+                self.phi = tf.reshape(self.phi, [1] + [2 for _ in range(self.nqubits)])
 
-        with tf.name_scope("circuit"):
-            # Set the first gate to be the input layer. This will be useful later.
-            self.gates[0]._input_layer = True
-            if self.batch_params:
-                for g in self.gates:
-                    g._batch_params = True
-                    g._batch_size = self.batch_size
+            with tf.name_scope("circuit"):
+                # Set the first gate to be the input layer. This will be useful later.
+                self.gates[0]._input_layer = True
+                if self.batch_params:
+                    for g in self.gates:
+                        g._batch_params = True
+                        g._batch_size = self.batch_size
 
-            if self.circuit_order == 'gate':
-                self.circuit = tf.keras.Sequential(layers=self.gates, name='circuit')
-            elif self.circuit_order == 'layer':
-                self._get_layer_ordering()
-                layers = []
-                for l in range(self.nlayers):
-                    layers.append(CircuitLayer(gates=self.gates_per_layers[l], name='layer_{}'.format(l)))
-
-                if self.get_phi_per_layer:
-                    assert not self.batch_params, "batch_params is not supported when getting the wave functions per layer"
-
-                    layers = [tf.keras.layers.Input(tensor=self.phi)] + layers
-                    self.circuit = tf.keras.Sequential(layers=layers, name='circuit')
-                    phi_per_layer = []
-
+                if self.circuit_order == 'gate':
+                    self.circuit = tf.keras.Sequential(layers=self.gates, name='circuit')
+                elif self.circuit_order == 'layer':
+                    self._get_layer_ordering()
+                    layers = []
                     for l in range(self.nlayers):
-                        phi_per_layer.append(self.circuit.layers[l].output)
-                    self.phi_per_layer = tf.concat(phi_per_layer, axis=0)
+                        layers.append(CircuitLayer(gates=self.gates_per_layers[l], name='layer_{}'.format(l)))
 
-                else:
-                    self.circuit = tf.keras.Sequential(layers=layers, name='circuit')
+                    if self.get_phi_per_layer:
+                        assert not self.batch_params, "batch_params is not supported when getting the wave functions per layer"
+
+                        layers = [tf.keras.layers.Input(tensor=self.phi)] + layers
+                        self.circuit = tf.keras.Sequential(layers=layers, name='circuit')
+                        phi_per_layer = []
+
+                        for l in range(self.nlayers):
+                            phi_per_layer.append(self.circuit.layers[l].output)
+                        self.phi_per_layer = tf.concat(phi_per_layer, axis=0)
+
+                    else:
+                        self.circuit = tf.keras.Sequential(layers=layers, name='circuit')
 
     def _build_graph_multi_gpu(self):
         """
@@ -186,10 +197,6 @@ class QuantumCircuit:
 
         """
 
-        assert self.device in ['CPU', 'GPU'], "device must be one of '['CPU', 'GPU'], received {}".format(self.device)
-        assert isinstance(self.device_number, int), 'device_number must be and integer, received {}'.format(
-            type(self.device_number))
-
         # with tf.device("/" + self.device + ":" + str(self.device_number)):
         if self.device == "CPU":
             config = tf.ConfigProto(device_count={'GPU': 0})
@@ -238,9 +245,10 @@ class QuantumCircuit:
                     phi = circuit_chunk(phi)
             return phi
         else:
-            return self.circuit(inputs, training)
+            with tf.device(self.tf_device):
+                return self.circuit(inputs, training)
 
-    def  set_parameters(self, theta):
+    def set_parameters(self, theta):
         """
         Set the parameters of the quantum circuit by an external input. Also works for batches of parameters
         if the QuantumCircuit has been initialized with batch_params=True.
@@ -277,20 +285,20 @@ class QuantumCircuit:
         """
         layers = {}
         self.gates_per_layers = {}
-        minimal_layer = dict(zip(range(1,self.nqubits+1), [-1 for _ in range(self.nqubits)]))
+        minimal_layer = dict(zip(range(1, self.nqubits + 1), [-1 for _ in range(self.nqubits)]))
         s = 0
         for g in self.gates:
             for l in integer_generator(s):
                 if l not in layers.keys():
                     layers[l] = set(range(1, self.nqubits + 1))
-                if (all([w in layers[l] for w in g.wires])) & (all([minimal_layer[w]<l for w in g.wires])):
+                if (all([w in layers[l] for w in g.wires])) & (all([minimal_layer[w] < l for w in g.wires])):
                     g.layer = l
                     for w in g.wires:
-                        minimal_layer[w]=l
+                        minimal_layer[w] = l
                         layers[l].remove(w)
                     break
                 if len(layers[s]) == 0:
-                    s+=1
+                    s += 1
 
         for g in self.gates:
             if g.layer not in self.gates_per_layers.keys():
@@ -400,3 +408,34 @@ class CircuitLayer(Layer):
             phi = self.gates[i](phi)
         phi = tf.identity(phi, name='phi_layer_{}'.format(self.layer))
         return phi
+
+
+def projector_circuit_template(N: int, projectors: List[np.ndarray], circuitargs: dict) -> Tuple[
+    QuantumCircuit, tf.Tensor]:
+    """
+    Template function for the design of arbitrary projective circuits.
+
+    Args:
+        *N (int)*:
+            The number of qubits.
+
+        *projectors (List)*:
+            List of `np.ndarrays` containing the projectors to be applied. See also the `zyglrox.core.gates.Projector`
+            class.
+
+        *circuitargs (dict)*:
+            Dictionary of arguments for QuantumCircuit object.
+
+    Returns (Tuple):
+        A `QuantumCircuit` object containing the circuit with projections
+        The probability of measuring the given set of `projectors`
+
+    """
+    gates = []
+
+    ### CIRCUIT IMPLEMENTATION GOES HERE
+
+    qc = QuantumCircuit(nqubits=N, gates=gates, *circuitargs)
+    Z = tf.reduce_prod(tf.stack([l.Z for l in qc.circuit.layers if l._is_projector]))
+
+    return qc, Z

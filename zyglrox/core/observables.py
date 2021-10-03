@@ -117,7 +117,7 @@ class Observable(Layer):
 
         assert max(
             self.wires) - 1 < self.total_qubits, "Operation {} is performed on qubit {}, but system only has {} qubits".format(
-            self.op_name, max(self.wires) - 1, self.nqubits)
+            self.op_name, max(self.wires) - 1, self.total_qubits)
 
         if self.sample:
             unused_idxs = [idx for idx in range(2, self.total_qubits + 2) if idx not in [w + 1 for w in self.wires]]

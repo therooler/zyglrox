@@ -16,20 +16,22 @@ import tensorflow as tf
 from zyglrox.core.utils import tf_kron, tensordot
 from zyglrox.core._config import TF_FLOAT_DTYPE, TF_COMPLEX_DTYPE
 import numpy as np
-from typing import List
+from typing import List, Union
 from tensorflow.keras.layers import Layer
 from tensorflow.python.framework import tensor_shape
+import string
+import copy
 
 
 # ========================================================
 #  Abstract Gate class
 # ========================================================
-
 class Gate(Layer):
     """
     Abstract Quantum Gate class
 
     """
+    ALPHABET = list(string.ascii_lowercase)
 
     def __init__(self, nparams: int, wires: List[int], value: List[float] = None, name=None, **kwargs):
         """
@@ -73,6 +75,7 @@ class Gate(Layer):
         self._batch_params = False
         self._batch_size = None
         self.layer = None
+        self._is_projector = False
         # shift all dimensions due to batch dim
         self.wires = [w + 1 for w in wires]
 
@@ -181,7 +184,7 @@ class Gate(Layer):
                                     )
                             self.theta = self.value
                         else:
-                            self.value = np.array(self.value, dtype=np.float32).reshape((-1, self.nparams, 1))
+                            self.value = np.array(self.value, dtype=float).reshape((-1, self.nparams, 1))
                             assert self.value.size == self.nparams, "Gate requires {} initial values, but {} were given".format(
                                 self.nparams, self.value.size)
                             self.theta = tf.compat.v1.get_variable(initializer=self.value, dtype=TF_FLOAT_DTYPE,
@@ -228,8 +231,10 @@ def pauli_z():
 def hadamard():
     return tf.convert_to_tensor(np.array([[1, 1], [1, -1]]) / np.math.sqrt(2), dtype=TF_COMPLEX_DTYPE)
 
+
 def t_gate():
-    return tf.convert_to_tensor(np.array([[1, 0], [0, np.exp(1j * np.pi/4)]]), dtype=TF_COMPLEX_DTYPE)
+    return tf.convert_to_tensor(np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]]), dtype=TF_COMPLEX_DTYPE)
+
 
 def swap():
     return tf.convert_to_tensor(np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]),
@@ -292,6 +297,7 @@ class Hadamard(Gate):
         phi = tensordot(self.op, inputs, axes=self.tdot_axes)
         return tf.transpose(phi, perm=self.inv_perm)
 
+
 class T(Gate):
     r"""
     Gate that implements the T unitary operation.
@@ -328,6 +334,7 @@ class T(Gate):
         """
         phi = tensordot(self.op, inputs, axes=self.tdot_axes)
         return tf.transpose(phi, perm=self.inv_perm)
+
 
 class PauliX(Gate):
     r"""
@@ -1367,6 +1374,517 @@ class Toffoli(Gate):
         """
         phi = tensordot(self.op, inputs, axes=self.tdot_axes)
         return tf.transpose(phi, perm=self.inv_perm)
+
+
+class XX_hexa(Gate):
+    r"""
+    Gate that implements a 6 qubit rotation Ising XX spin interaction.
+
+    .. math::
+
+        \text{XX}(\theta) =  \exp(-i\theta \bigotimes^6\sigma^x/2) = \cos(\theta/2) \: I + i \sin(-\theta/2) \bigotimes^6 \sigma^x
+
+    """
+
+    def __init__(self, wires: List[int], value: List[float] = None, conjugate=False, name=None, **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'XXhexa_' + '_'.join([str(s) for s in wires])
+        assert len(wires) == 6, "Gate should operate on 6 qubits, found {}".format(wires)
+        super(XX_hexa, self).__init__(nparams=1, wires=wires, value=value, name=name, **kwargs)
+        self.conjugate = conjugate
+
+    def build(self, input_shape):
+        super(XX_hexa, self).build(input_shape)
+
+        self.I = tf_kron(tf_kron(identity(), identity()),
+                         tf_kron(tf_kron(identity(), identity()), tf_kron(identity(), identity())))
+        self.PX = tf_kron(tf_kron(pauli_x(), pauli_x()),
+                          tf_kron(tf_kron(pauli_x(), pauli_x()), tf_kron(pauli_x(), pauli_x())))
+
+    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
+            if inputs.shape.as_list()[0] is not None:
+                inputs = tf.tile(inputs,
+                                 multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
+
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PX
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+                            dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
+            return phi
+
+        else:
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PX
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+
+            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            return tf.transpose(phi, perm=self.inv_perm)
+
+
+class YY_hexa(Gate):
+    r"""
+    Gate that implements a 6 qubit rotation Ising YY spin interaction.
+
+    .. math::
+
+        \text{XX}(\theta) =  \exp(-i\theta \bigotimes^6\sigma^x/2) = \cos(\theta/2) \: I + i \sin(-\theta/2) \bigotimes^6 \sigma^y
+
+    """
+
+    def __init__(self, wires: List[int], value: List[float] = None, conjugate=False, name=None, **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'YYhexa_' + '_'.join([str(s) for s in wires])
+        assert len(wires) == 6, "Gate should operate on 6 qubits, found {}".format(wires)
+        super(YY_hexa, self).__init__(nparams=1, wires=wires, value=value, name=name, **kwargs)
+        self.conjugate = conjugate
+
+    def build(self, input_shape):
+        super(YY_hexa, self).build(input_shape)
+
+        self.I = tf_kron(tf_kron(identity(), identity()),
+                         tf_kron(tf_kron(identity(), identity()), tf_kron(identity(), identity())))
+        self.PY = tf_kron(tf_kron(pauli_y(), pauli_y()),
+                          tf_kron(tf_kron(pauli_y(), pauli_y()), tf_kron(pauli_y(), pauli_y())))
+
+    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
+            if inputs.shape.as_list()[0] is not None:
+                inputs = tf.tile(inputs,
+                                 multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
+
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PY
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+                            dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
+            return phi
+
+        else:
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PY
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+
+            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            return tf.transpose(phi, perm=self.inv_perm)
+
+
+class ZZ_hexa(Gate):
+    r"""
+    Gate that implements a 6 qubit rotation Ising XX spin interaction.
+
+    .. math::
+
+        \text{ZZ}(\theta) =  \exp(-i\theta \bigotimes^6\sigma^z/2) = \cos(\theta/2) \: I + i \sin(-\theta/2) \bigotimes^6 \sigma^z
+
+    """
+
+    def __init__(self, wires: List[int], value: List[float] = None, conjugate=False, name=None, **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'ZZhexa_' + '_'.join([str(s) for s in wires])
+        assert len(wires) == 6, "Gate should operate on 6 qubits, found {}".format(wires)
+        super(ZZ_hexa, self).__init__(nparams=1, wires=wires, value=value, name=name, **kwargs)
+        self.conjugate = conjugate
+
+    def build(self, input_shape):
+        super(ZZ_hexa, self).build(input_shape)
+
+        self.I = tf_kron(tf_kron(identity(), identity()),
+                         tf_kron(tf_kron(identity(), identity()), tf_kron(identity(), identity())))
+        self.PZ = tf_kron(tf_kron(pauli_z(), pauli_z()),
+                          tf_kron(tf_kron(pauli_z(), pauli_z()), tf_kron(pauli_z(), pauli_z())))
+
+    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
+            if inputs.shape.as_list()[0] is not None:
+                inputs = tf.tile(inputs,
+                                 multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
+
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PZ
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+                            dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
+            return phi
+
+        else:
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PZ
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+
+            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            return tf.transpose(phi, perm=self.inv_perm)
+
+
+class XX_tri(Gate):
+    r"""
+    Gate that implements a 6 qubit rotation Ising XX spin interaction.
+
+    .. math::
+
+        \text{ZZ}(\theta) =  \exp(-i\theta \bigotimes^6\sigma^z/2) = \cos(\theta/2) \: I + i \sin(-\theta/2) \bigotimes^6 \sigma^z
+
+    """
+
+    def __init__(self, wires: List[int], value: List[float] = None, conjugate=False, name=None, **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'XXtri_' + '_'.join([str(s) for s in wires])
+        assert len(wires) == 3, "Gate should operate on 3 qubits, found {}".format(wires)
+        super(XX_tri, self).__init__(nparams=1, wires=wires, value=value, name=name, **kwargs)
+        self.conjugate = conjugate
+
+    def build(self, input_shape):
+        super(XX_tri, self).build(input_shape)
+
+        self.I = tf_kron(tf_kron(identity(), identity()), identity())
+        self.PX = tf_kron(tf_kron(pauli_x(), pauli_x()), pauli_x())
+
+    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
+            if inputs.shape.as_list()[0] is not None:
+                inputs = tf.tile(inputs,
+                                 multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
+
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PX
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+                            dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
+            return phi
+
+        else:
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PX
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+
+            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            return tf.transpose(phi, perm=self.inv_perm)
+
+
+class YY_tri(Gate):
+    r"""
+    Gate that implements a 6 qubit rotation Ising XX spin interaction.
+
+    .. math::
+
+        \text{ZZ}(\theta) =  \exp(-i\theta \bigotimes^6\sigma^z/2) = \cos(\theta/2) \: I + i \sin(-\theta/2) \bigotimes^6 \sigma^z
+
+    """
+
+    def __init__(self, wires: List[int], value: List[float] = None, conjugate=False, name=None, **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'YYtri_' + '_'.join([str(s) for s in wires])
+        assert len(wires) == 3, "Gate should operate on 3 qubits, found {}".format(wires)
+        super(YY_tri, self).__init__(nparams=1, wires=wires, value=value, name=name, **kwargs)
+        self.conjugate = conjugate
+
+    def build(self, input_shape):
+        super(YY_tri, self).build(input_shape)
+
+        self.I = tf_kron(tf_kron(identity(), identity()), identity())
+        self.PY = tf_kron(tf_kron(pauli_y(), pauli_y()), pauli_y())
+
+    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
+            if inputs.shape.as_list()[0] is not None:
+                inputs = tf.tile(inputs,
+                                 multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
+
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PY
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+                            dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
+            return phi
+
+        else:
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PY
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+
+            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            return tf.transpose(phi, perm=self.inv_perm)
+
+
+class ZZ_tri(Gate):
+    r"""
+    Gate that implements a 6 qubit rotation Ising XX spin interaction.
+
+    .. math::
+
+        \text{ZZ}(\theta) =  \exp(-i\theta \bigotimes^6\sigma^z/2) = \cos(\theta/2) \: I + i \sin(-\theta/2) \bigotimes^6 \sigma^z
+
+    """
+
+    def __init__(self, wires: List[int], value: List[float] = None, conjugate=False, name=None, **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'ZZtri_' + '_'.join([str(s) for s in wires])
+        assert len(wires) == 3, "Gate should operate on 3 qubits, found {}".format(wires)
+        super(ZZ_tri, self).__init__(nparams=1, wires=wires, value=value, name=name, **kwargs)
+        self.conjugate = conjugate
+
+    def build(self, input_shape):
+        super(ZZ_tri, self).build(input_shape)
+
+        self.I = tf_kron(tf_kron(identity(), identity()), identity())
+        self.PZ = tf_kron(tf_kron(pauli_z(), pauli_z()), pauli_z())
+
+    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
+            if inputs.shape.as_list()[0] is not None:
+                inputs = tf.tile(inputs,
+                                 multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
+
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PZ
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+                            dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
+            return phi
+
+        else:
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PZ
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+
+            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            return tf.transpose(phi, perm=self.inv_perm)
+
+
+class Projector(Gate):
+    r"""
+    Projector that projects the state onto an eigenvector of a Hermitian observable
+
+    .. math::
+
+        \rho^\prime = \frac{\Pi_n \rho \Pi_n}{Z}
+
+    """
+
+    def __init__(self, pi: Union[np.ndarray, tf.Tensor], wires: List[int], name=None, **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'Projector_' + '_'.join([str(s) for s in wires])
+        assert len(wires) == 1, "Gate should operate on 1 qubits, found {}".format(wires)
+        assert isinstance(pi,
+                          (np.ndarray, tf.Tensor)), f"'pi' must be of type np.ndarray or tf.Tensor, received {type(pi)}"
+
+        assert pi.shape == (2, 2), f"pi must have shape [2,2], received {pi.shape}"
+        if isinstance(pi, np.ndarray):
+            self.op = tf.constant(pi, dtype=TF_COMPLEX_DTYPE)
+        else:
+            self.op = pi
+        super(Projector, self).__init__(nparams=0, wires=wires, value=None, name=name, **kwargs)
+        self.conjugate = False
+        self._is_projector = True
+
+    def build(self, input_shape):
+        super(Projector, self).build(input_shape)
+
+        einsum_indices_pi = self.ALPHABET[0] + self.ALPHABET[1]
+        einsum_indices_phi = [self.ALPHABET[-1]] + [self.ALPHABET[i + 2] for i in range(len(input_shape) - 1)]
+        einsum_indices_phi[self.wires[0]] = self.ALPHABET[1]
+        einsum_indices_phi_out = copy.copy(einsum_indices_phi)
+        einsum_indices_phi_out[self.wires[0]] = self.ALPHABET[0]
+        self.einsum_contraction = ''.join(einsum_indices_pi) + ',' + ''.join(einsum_indices_phi) + '->' + ''.join(
+            einsum_indices_phi_out)
+
+    def call(self, inputs: tf.Tensor, probability_only: bool = False, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            raise NotImplementedError
+
+        else:
+            phi_out = tf.einsum(self.einsum_contraction, self.op, inputs)
+            self.Z = tf.linalg.norm(tf.reshape(phi_out, (-1, 1)))
+            if probability_only:
+                return self.Z
+            else:
+                return phi_out / self.Z
+
+
+class WeightedProjector(Gate):
+    r"""
+    Projector that projects the state onto an eigenvector of a Hermitian observable
+
+    .. math::
+
+        \rho^\prime = \frac{\Pi_n \rho \Pi_n}{Z}
+
+    """
+
+    def __init__(self, observable: Union[np.ndarray, tf.Tensor], wires: List[int], name=None, **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'Projector_' + '_'.join([str(s) for s in wires])
+        assert len(wires) == 1, "Gate should operate on 1 qubits, found {}".format(wires)
+        assert isinstance(observable,
+                          (np.ndarray, tf.Tensor)), f"'pi' must be of type np.ndarray or tf.Tensor, received {type(pi)}"
+
+        assert observable.shape == (2, 2), f"pi must have shape [2,2], received {observable.shape}"
+        if isinstance(observable, np.ndarray):
+            self.op = tf.constant(observable, dtype=TF_COMPLEX_DTYPE)
+        else:
+            self.op = observable
+        super(WeightedProjector, self).__init__(nparams=0, wires=wires, value=None, name=name, **kwargs)
+        self.conjugate = False
+        self._is_projector = True
+
+    def build(self, input_shape):
+        super(WeightedProjector, self).build(input_shape)
+
+        einsum_indices_pi = self.ALPHABET[0] + self.ALPHABET[1]
+        einsum_indices_phi = [self.ALPHABET[-1]] + [self.ALPHABET[i + 2] for i in range(len(input_shape) - 1)]
+        einsum_indices_phi[self.wires[0]] = self.ALPHABET[1]
+        einsum_indices_phi_out = copy.copy(einsum_indices_phi)
+        einsum_indices_phi_out[self.wires[0]] = self.ALPHABET[0]
+        self.einsum_contraction = ''.join(einsum_indices_pi) + ',' + ''.join(einsum_indices_phi) + '->' + ''.join(
+            einsum_indices_phi_out)
+        self.projectors = self.get_evals_and_projectors(self.op)[1]
+
+    def call(self, inputs: tf.Tensor, probability_only: bool = False, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            raise NotImplementedError
+
+        else:
+            phi_out_1 = tf.einsum(self.einsum_contraction, self.projectors[0], inputs)
+            phi_out_2 = tf.einsum(self.einsum_contraction, self.projectors[1], inputs)
+            self.Z1 = tf.linalg.norm(tf.reshape(phi_out_1, (-1, 1)))
+            self.Z2 = tf.linalg.norm(tf.reshape(phi_out_2, (-1, 1)))
+            phi_out_1 = phi_out_1 / self.Z1
+            phi_out_2 = phi_out_2 / self.Z2
+            self.cond = tf.reduce_all(tf.equal(tf.real(self.op),tf.eye(2, 2, dtype=TF_FLOAT_DTYPE)))
+            r = tf.random.uniform([1])
+
+            if probability_only:
+                return self.Z1
+            else:
+                return tf.cond(tf.reduce_all(tf.equal(tf.real(self.op),tf.eye(2, 2, dtype=TF_FLOAT_DTYPE))),
+                    lambda: inputs, # if op is identity, return the state
+                    lambda: tf.cond(tf.math.greater(tf.real(self.Z1), tf.constant(1e-3, dtype=TF_FLOAT_DTYPE)), # if Z larger than zero, continue
+                                    lambda: tf.cond(tf.math.less(tf.real(self.Z1), tf.constant(0.999, dtype=TF_FLOAT_DTYPE)) , # if Z is smaller than zero, continue
+                                                    lambda: tf.cond(tf.math.less(tf.real(self.Z1) ** 2,r[0]), # choose state one or two with probability Z^2
+                                                    lambda: phi_out_1,
+                                                    lambda: phi_out_2), lambda: phi_out_1),
+                                    lambda: phi_out_2)) # else, return 1-Z^2 state
+
+
+    def get_evals_and_projectors(self, O):
+        """
+        Get the eigenvalues and projectors of a Hermitian observable
+
+        Args:
+            *O (Tensor)*:
+                Tensorflow tensor representing a Hermitian observable.
+
+        Returns (Tuple):
+            eigenvalues and the corresponding stacked projectors.
+
+        """
+        eval, evec = tf.linalg.eigh(O)
+        evec = evec[:, :, tf.newaxis]
+        projectors = []
+        for i in range(2 ** self.nqubits):
+            projectors.append(evec[:, i] * tf.transpose(evec[:, i], conjugate=True))
+        return eval, tf.stack(projectors)
 
 
 def hermitian(operation: tf.Tensor) -> tf.Tensor:

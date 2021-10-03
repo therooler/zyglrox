@@ -13,14 +13,17 @@
 # limitations under the License.
 from zyglrox.core.gates import *
 from zyglrox.core._config import TF_FLOAT_DTYPE
+from zyglrox.core.circuit import QuantumCircuit
+from zyglrox.core.utils import get_available_devices
+import itertools as it
 
 
 def verify_circuit_input(N, depth, initial_parameters, desired_shape):
     assert isinstance(N, int), "N must be an integer, received {}".format(type(N))
     assert isinstance(depth, int), "depth must be an integer, received {}".format(type(depth))
     assert initial_parameters.shape.as_list() == list(desired_shape), "Expected array of shape {}, " \
-                                                      "received {}".format(desired_shape,
-                                                                           initial_parameters.shape)
+                                                                      "received {}".format(desired_shape,
+                                                                                           initial_parameters.shape)
 
 
 def staircase_cnot(N: int, mod=True):
@@ -132,11 +135,60 @@ def tfi_1d_hva_circuit(N: int, depth: int, initial_parameters, boundary_conditio
         for j in range(1, N - 1, 2):
             gates.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
 
-        if boundary_condition=='closed':
+        if boundary_condition == 'closed':
             gates.append(ZZ(wires=[N - 1, 0], value=parameters[0, l]))
         # elif boundary_condition=='open':
         gates.extend([RX(wires=[i, ], value=parameters[1, l]) for i in range(N)])
     return gates
+
+
+def tfi_1d_projective_hva_circuit(N: int, depth: int, projectors, initial_parameters, boundary_condition: str, nmeas:int):
+    verify_circuit_input(N, depth, initial_parameters, (2, depth))
+
+    parameters = tf.Variable(initial_parameters,
+                             constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
+
+    projector_combinations = list(it.product((0, 1), repeat=nmeas))
+    projective_circuits = []
+    gpus = get_available_devices('GPU')
+
+    for num, comb in enumerate(projector_combinations):
+        gpu_num = int(num % len(gpus))
+
+        projectors_comb = [projectors[i] for i in comb]
+        gates_proj = []
+        gates_proj.extend([Hadamard(wires=[i, ]) for i in range(N)])
+        for l in range(depth):
+            for j in range(0, N - 1, 2):
+                gates_proj.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
+            for j in range(1, N - 1, 2):
+                gates_proj.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
+            if boundary_condition == 'closed':
+                gates_proj.append(ZZ(wires=[N - 1, 0], value=parameters[0, l]))
+            gates_proj.append(Projector(pi=projectors_comb[l], wires=[l, ]))
+            for i in range(N):
+                gates_proj.append(RX(wires=[i, ], value=parameters[1, l]))
+        projective_circuits.append([QuantumCircuit(nqubits=N, gates=gates_proj, device_number=gpu_num, device='GPU'), ])
+        projective_circuits[num][0].execute()
+        projective_circuits[num].append(tf.math.real(
+            tf.reduce_prod(
+                tf.stack([l.Z for l in projective_circuits[num][0].circuit.layers if l._is_projector]))) ** 2)
+
+    gates_unit = []
+
+    gates_unit.extend([Hadamard(wires=[i, ]) for i in range(N)])
+    for l in range(depth):
+        for j in range(0, N - 1, 2):
+            gates_unit.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
+        for j in range(1, N - 1, 2):
+            gates_unit.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
+        if boundary_condition == 'closed':
+            gates_unit.append(ZZ(wires=[N - 1, 0], value=parameters[0, l]))
+        for i in range(N):
+            gates_unit.append(RX(wires=[i, ], value=parameters[1, l]))
+    qc = QuantumCircuit(nqubits=N, gates=gates_unit, device='GPU')
+
+    return qc, projective_circuits
 
 
 def xy_1d_hva_alt_circuit(N: int, depth: int, initial_parameters, boundary_condition):
@@ -155,7 +207,7 @@ def xy_1d_hva_alt_circuit(N: int, depth: int, initial_parameters, boundary_condi
         for j in range(1, N - 1, 2):
             gates.append(ZZ(wires=[j, j + 1], value=parameters[2, l]))
             gates.append(YY(wires=[j, j + 1], value=parameters[3, l]))
-        if boundary_condition=='closed':
+        if boundary_condition == 'closed':
             gates.append(ZZ(wires=[N - 1, 0], value=parameters[2, l]))
             gates.append(YY(wires=[N - 1, 0], value=parameters[3, l]))
 
@@ -176,27 +228,28 @@ def xy_1d_hva_circuit(N: int, depth: int, initial_parameters, boundary_condition
             gates.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
             gates.append(ZZ(wires=[j, j + 1], value=parameters[0, l]))
 
-        if boundary_condition=='closed':
+        if boundary_condition == 'closed':
             gates.append(ZZ(wires=[N - 1, 0], value=parameters[0, l]))
 
         for j in range(0, N - 1, 2):
             gates.append(YY(wires=[j, j + 1], value=parameters[1, l]))
             gates.append(YY(wires=[j, j + 1], value=parameters[1, l]))
 
-        if boundary_condition=='closed':
+        if boundary_condition == 'closed':
             gates.append(YY(wires=[N - 1, 0], value=parameters[1, l]))
 
         gates.extend([RX(wires=[i, ], value=parameters[2, l]) for i in range(N)])
     return gates
+
 
 def tfi_2d_hva_circuit(N: int, depth: int, edge_coloring: dict, initial_parameters, f_or_af: 'f'):
     parameters = tf.Variable(initial_parameters,
                              constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
     gates = []
     print(list(edge_coloring.values()))
-    if f_or_af== 'f':
+    if f_or_af == 'f':
         gates.extend([Hadamard(wires=[i]) for i in range(N)])
-    elif f_or_af=='af':
+    elif f_or_af == 'af':
         for edge in list(edge_coloring.values())[-1]:
             gates.append(PauliX(wires=[edge[0]]))
 
@@ -238,6 +291,232 @@ def xxz_1d_hva_circuit(N: int, depth: int, initial_parameters, boundary_conditio
     return gates
 
 
+def xxz_1d_projective_hva_circuit(N: int, depth: int, projectors, initial_parameters, boundary_condition: str, nmeas:int):
+    verify_circuit_input(N, depth, initial_parameters, (2, 2, depth))
+
+    parameters = tf.Variable(initial_parameters,
+                             constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
+
+    projector_combinations = list(it.product((0, 1), repeat=nmeas))
+    projective_circuits = []
+    gpus = get_available_devices('GPU')
+
+    for num, comb in enumerate(projector_combinations):
+        gpu_num = int(num % len(gpus))
+        projectors_comb = [projectors[i] for i in comb]
+        gates_proj = []
+        meas_count = 0
+        for i in range(0, N - 1, 2):
+            gates_proj.append(PauliX(wires=[i]))
+            gates_proj.append(PauliX(wires=[i + 1]))
+            gates_proj.append(Hadamard(wires=[i]))
+            gates_proj.append(CNOT(wires=[i, i + 1]))
+
+        for l in range(depth):
+            for j in range(1, N - 1, 2):
+                gates_proj.append(ZZ(wires=[j, j + 1], value=parameters[0, 0, l]))
+                gates_proj.append(YY(wires=[j, j + 1], value=parameters[0, 1, l]))
+                gates_proj.append(XX(wires=[j, j + 1], value=parameters[0, 1, l]))
+
+            if boundary_condition == 'closed':
+                gates_proj.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
+                gates_proj.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
+                gates_proj.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
+
+            for j in range(0, N - 1, 2):
+                gates_proj.append(ZZ(wires=[j, j + 1], value=parameters[1, 0, l]))
+                gates_proj.append(YY(wires=[j, j + 1], value=parameters[1, 1, l]))
+                gates_proj.append(XX(wires=[j, j + 1], value=parameters[1, 1, l]))
+            if meas_count<nmeas:
+                gates_proj.append(Projector(pi=projectors_comb[meas_count], wires=[l, ]))
+                meas_count+=1
+        projective_circuits.append([QuantumCircuit(nqubits=N, gates=gates_proj, device_number=gpu_num, device='GPU'), ])
+        projective_circuits[num][0].execute()
+        projective_circuits[num].append(tf.math.real(
+            tf.reduce_prod(tf.stack([l.Z for l in projective_circuits[num][0].circuit.layers if l._is_projector]))) ** 2
+                                        )
+
+    gates_unit = []
+
+    for i in range(0, N - 1, 2):
+        gates_unit.append(PauliX(wires=[i]))
+        gates_unit.append(PauliX(wires=[i + 1]))
+        gates_unit.append(Hadamard(wires=[i]))
+        gates_unit.append(CNOT(wires=[i, i + 1]))
+
+    for l in range(depth):
+        for j in range(1, N - 1, 2):
+            gates_unit.append(ZZ(wires=[j, j + 1], value=parameters[0, 0, l]))
+            gates_unit.append(YY(wires=[j, j + 1], value=parameters[0, 1, l]))
+            gates_unit.append(XX(wires=[j, j + 1], value=parameters[0, 1, l]))
+
+        if boundary_condition == 'closed':
+            gates_unit.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
+            gates_unit.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
+            gates_unit.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
+
+        for j in range(0, N - 1, 2):
+            gates_unit.append(ZZ(wires=[j, j + 1], value=parameters[1, 0, l]))
+            gates_unit.append(YY(wires=[j, j + 1], value=parameters[1, 1, l]))
+            gates_unit.append(XX(wires=[j, j + 1], value=parameters[1, 1, l]))
+    qc = QuantumCircuit(nqubits=N, gates=gates_unit, device='GPU')
+
+    return qc, projective_circuits
+
+
+def xxz_1d_projective_hva_circuit_multi_measure(N: int, depth: int, projectors, initial_parameters,
+                                                boundary_condition: str, nmeas:int):
+    verify_circuit_input(N, depth, initial_parameters, (2, 2, depth))
+
+    parameters = tf.Variable(initial_parameters,
+                             constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
+
+    projective_circuits = []
+
+    # comb = np.random.randint(0,2, nmeas)
+    comb = [0]*nmeas
+    print(f'Projectors applied: {comb}')
+    projectors_comb = [projectors[i] for i in comb]
+    gates_proj = []
+    meas_count = 0
+    for i in range(0, N - 1, 2):
+        gates_proj.append(PauliX(wires=[i]))
+        gates_proj.append(PauliX(wires=[i + 1]))
+        gates_proj.append(Hadamard(wires=[i]))
+        gates_proj.append(CNOT(wires=[i, i + 1]))
+
+    for l in range(depth):
+        for j in range(1, N - 1, 2):
+            gates_proj.append(ZZ(wires=[j, j + 1], value=parameters[0, 0, l]))
+            gates_proj.append(YY(wires=[j, j + 1], value=parameters[0, 1, l]))
+            gates_proj.append(XX(wires=[j, j + 1], value=parameters[0, 1, l]))
+
+        if boundary_condition == 'closed':
+            gates_proj.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
+            gates_proj.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
+            gates_proj.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
+
+        if meas_count<nmeas:
+            locs = np.random.choice(list(range(N)), min(nmeas-meas_count, N//2))
+            print(locs, f'depth {l}')
+            for loc in locs:
+                gates_proj.append(Projector(pi=projectors_comb[meas_count], wires=[loc, ]))
+                meas_count+=1
+
+        for j in range(0, N - 1, 2):
+            gates_proj.append(ZZ(wires=[j, j + 1], value=parameters[1, 0, l]))
+            gates_proj.append(YY(wires=[j, j + 1], value=parameters[1, 1, l]))
+            gates_proj.append(XX(wires=[j, j + 1], value=parameters[1, 1, l]))
+        if meas_count < nmeas:
+            locs = np.random.choice(list(range(N)), min(nmeas-meas_count, N//2))
+            print(locs, f'depth {l}')
+            for loc in locs:
+                gates_proj.append(Projector(pi=projectors_comb[meas_count], wires=[loc, ]))
+                meas_count += 1
+    projective_circuits.append([QuantumCircuit(nqubits=N, gates=gates_proj, device='GPU'), ])
+    projective_circuits[0][0].execute()
+    projective_circuits[0].append(tf.constant(1.0, TF_FLOAT_DTYPE))
+
+    gates_unit = []
+
+    for i in range(0, N - 1, 2):
+        gates_unit.append(PauliX(wires=[i]))
+        gates_unit.append(PauliX(wires=[i + 1]))
+        gates_unit.append(Hadamard(wires=[i]))
+        gates_unit.append(CNOT(wires=[i, i + 1]))
+
+    for l in range(depth):
+        for j in range(1, N - 1, 2):
+            gates_unit.append(ZZ(wires=[j, j + 1], value=parameters[0, 0, l]))
+            gates_unit.append(YY(wires=[j, j + 1], value=parameters[0, 1, l]))
+            gates_unit.append(XX(wires=[j, j + 1], value=parameters[0, 1, l]))
+
+        if boundary_condition == 'closed':
+            gates_unit.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
+            gates_unit.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
+            gates_unit.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
+
+        for j in range(0, N - 1, 2):
+            gates_unit.append(ZZ(wires=[j, j + 1], value=parameters[1, 0, l]))
+            gates_unit.append(YY(wires=[j, j + 1], value=parameters[1, 1, l]))
+            gates_unit.append(XX(wires=[j, j + 1], value=parameters[1, 1, l]))
+    qc = QuantumCircuit(nqubits=N, gates=gates_unit, device='GPU')
+
+    return qc, projective_circuits
+
+
+def xxz_1d_projective_hva_circuit_single_measure(N: int, depth: int, projectors, initial_parameters,
+                                                boundary_condition: str, nmeas:int):
+    verify_circuit_input(N, depth, initial_parameters, (2, 2, depth))
+
+    parameters = tf.Variable(initial_parameters,
+                             constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))
+
+    projective_circuits = []
+
+    comb = [0]*nmeas * depth
+    print(f'Projectors applied: {comb}')
+    projectors_comb = [projectors[i] for i in comb]
+    gates_proj = []
+    meas_count = 0
+    for i in range(0, N - 1, 2):
+        gates_proj.append(PauliX(wires=[i]))
+        gates_proj.append(PauliX(wires=[i + 1]))
+        gates_proj.append(Hadamard(wires=[i]))
+        gates_proj.append(CNOT(wires=[i, i + 1]))
+
+    for l in range(depth):
+        for j in range(1, N - 1, 2):
+            gates_proj.append(ZZ(wires=[j, j + 1], value=parameters[0, 0, l]))
+            gates_proj.append(YY(wires=[j, j + 1], value=parameters[0, 1, l]))
+            gates_proj.append(XX(wires=[j, j + 1], value=parameters[0, 1, l]))
+
+        if boundary_condition == 'closed':
+            gates_proj.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
+            gates_proj.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
+            gates_proj.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
+
+        for j in range(0, N - 1, 2):
+            gates_proj.append(ZZ(wires=[j, j + 1], value=parameters[1, 0, l]))
+            gates_proj.append(YY(wires=[j, j + 1], value=parameters[1, 1, l]))
+            gates_proj.append(XX(wires=[j, j + 1], value=parameters[1, 1, l]))
+        locs = list(range(nmeas))
+        for loc in locs:
+            gates_proj.append(Projector(pi=projectors_comb[meas_count], wires=[loc, ]))
+            meas_count += 1
+
+    projective_circuits.append([QuantumCircuit(nqubits=N, gates=gates_proj, device='GPU'), ])
+    projective_circuits[0][0].execute()
+    projective_circuits[0].append(tf.constant(1.0, TF_FLOAT_DTYPE))
+
+    gates_unit = []
+
+    for i in range(0, N - 1, 2):
+        gates_unit.append(PauliX(wires=[i]))
+        gates_unit.append(PauliX(wires=[i + 1]))
+        gates_unit.append(Hadamard(wires=[i]))
+        gates_unit.append(CNOT(wires=[i, i + 1]))
+
+    for l in range(depth):
+        for j in range(1, N - 1, 2):
+            gates_unit.append(ZZ(wires=[j, j + 1], value=parameters[0, 0, l]))
+            gates_unit.append(YY(wires=[j, j + 1], value=parameters[0, 1, l]))
+            gates_unit.append(XX(wires=[j, j + 1], value=parameters[0, 1, l]))
+
+        if boundary_condition == 'closed':
+            gates_unit.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
+            gates_unit.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
+            gates_unit.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
+
+        for j in range(0, N - 1, 2):
+            gates_unit.append(ZZ(wires=[j, j + 1], value=parameters[1, 0, l]))
+            gates_unit.append(YY(wires=[j, j + 1], value=parameters[1, 1, l]))
+            gates_unit.append(XX(wires=[j, j + 1], value=parameters[1, 1, l]))
+    qc = QuantumCircuit(nqubits=N, gates=gates_unit, device='GPU')
+
+    return qc, projective_circuits
+
+
 def xxz_1d_perm_hva_circuit(N: int, depth: int, initial_parameters, boundary_condition, permutation):
     verify_circuit_input(N, depth, initial_parameters, (2, 2, depth))
     parameters = tf.Variable(initial_parameters,
@@ -251,13 +530,13 @@ def xxz_1d_perm_hva_circuit(N: int, depth: int, initial_parameters, boundary_con
 
     for l in range(depth):
         for layer_number in range(4):
-            if permutation[l*4+layer_number] == 2:
+            if permutation[l * 4 + layer_number] == 2:
                 for j in range(1, N - 1, 2):
                     gates.append(ZZ(wires=[j, j + 1], value=parameters[0, 0, l]))
                 if boundary_condition == 'closed':
                     gates.append(ZZ(wires=[N - 1, 0], value=parameters[0, 0, l]))
 
-            elif permutation[l*4+layer_number] == 3:
+            elif permutation[l * 4 + layer_number] == 3:
                 for j in range(1, N - 1, 2):
                     gates.append(YY(wires=[j, j + 1], value=parameters[0, 1, l]))
                     gates.append(XX(wires=[j, j + 1], value=parameters[0, 1, l]))
@@ -265,11 +544,11 @@ def xxz_1d_perm_hva_circuit(N: int, depth: int, initial_parameters, boundary_con
                     gates.append(YY(wires=[N - 1, 0], value=parameters[0, 1, l]))
                     gates.append(XX(wires=[N - 1, 0], value=parameters[0, 1, l]))
 
-            elif permutation[l*4+layer_number] == 0:
+            elif permutation[l * 4 + layer_number] == 0:
                 for j in range(0, N - 1, 2):
                     gates.append(ZZ(wires=[j, j + 1], value=parameters[1, 0, l]))
 
-            elif permutation[l*4+layer_number] == 1:
+            elif permutation[l * 4 + layer_number] == 1:
                 for j in range(0, N - 1, 2):
                     gates.append(YY(wires=[j, j + 1], value=parameters[1, 1, l]))
                     gates.append(XX(wires=[j, j + 1], value=parameters[1, 1, l]))
@@ -305,11 +584,11 @@ def kitaev_honeycomb_circuit(depth: int, edge_coloring: dict, initial_parameters
     print(edge_coloring)
     # prepare ground state here
     # for edge in edge_coloring['zz']:
-        # Bellstates
-        # gates.append(PauliX(wires=[edge[0]]))
-        # gates.append(PauliX(wires=[edge[1]]))
-        # gates.append(Hadamard(wires=[edge[0]]))
-        # gates.append(CNOT(wires=[edge[0], edge[1]]))
+    # Bellstates
+    # gates.append(PauliX(wires=[edge[0]]))
+    # gates.append(PauliX(wires=[edge[1]]))
+    # gates.append(Hadamard(wires=[edge[0]]))
+    # gates.append(CNOT(wires=[edge[0], edge[1]]))
 
     parameters = tf.Variable(initial_parameters,
                              constraint=lambda x: tf.clip_by_value(x, 0, 2 * np.pi))

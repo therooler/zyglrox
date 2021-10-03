@@ -53,8 +53,9 @@ def _add_control(x, y, ax):
         None
 
     """
-    ax.add_patch(patches.Circle((x + 0.25, y + 0.25), 0.076, facecolor='black', edgecolor='black'))
-
+    ax.add_patch(patches.Circle((x + 0.25, y + 0.25), 0.12, facecolor='white', edgecolor='black'))
+    ax.add_line(mlines.Line2D([x + 0.165, x + 0.335], [y + 0.165, y + 0.335], zorder=3, color='black', linewidth=1))
+    ax.add_line(mlines.Line2D([x + 0.165, x + 0.335], [y + 0.335, y + 0.165], zorder=3, color='black', linewidth=1))
 
 def _add_target(x, y, ax):
     """
@@ -74,9 +75,8 @@ def _add_target(x, y, ax):
         None
 
     """
-    ax.add_patch(patches.Circle((x + 0.25, y + 0.25), 0.12, facecolor='white', edgecolor='black'))
-    ax.add_line(mlines.Line2D([x + 0.165, x + 0.335], [y + 0.165, y + 0.335], zorder=3, color='black', linewidth=1))
-    ax.add_line(mlines.Line2D([x + 0.165, x + 0.335], [y + 0.335, y + 0.165], zorder=3, color='black', linewidth=1))
+    ax.add_patch(patches.Circle((x + 0.25, y + 0.25), 0.076, facecolor='black', edgecolor='black'))
+
 
 
 def _add_double_block(x, y, name, ax):
