@@ -113,6 +113,8 @@
 <li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.CR3.html">gates.CR3</a></li>
 <li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.CZ.html">gates.CZ</a></li>
 <li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.Phase.html">gates.Phase</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.Projector.html">zyglrox.core.gates.Projector</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.WeightedProjector.html">zyglrox.core.gates.WeightedProjector</a></li>
 <li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.XX.html">gates.XX</a></li>
 <li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.YY.html">gates.YY</a></li>
 <li class="toctree-l4"><a class="reference internal" href="zyglrox.core.gates.ZZ.html">gates.ZZ</a></li>
@@ -495,6 +497,12 @@ Should initialize the trainable variables, and call the super’s <cite>build()<
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="zyglrox.core.gates.Phase.html#zyglrox.core.gates.Phase" title="zyglrox.core.gates.Phase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gates.Phase</span></code></a>(wires[, value, conjugate, name])</p></td>
 <td><p>Gate that implements a phase rotation</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="zyglrox.core.gates.Projector.html#zyglrox.core.gates.Projector" title="zyglrox.core.gates.Projector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gates.Projector</span></code></a>(pi, wires[, name])</p></td>
+<td><p>Projector that projects the state onto an eigenvector of a Hermitian observable</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="zyglrox.core.gates.WeightedProjector.html#zyglrox.core.gates.WeightedProjector" title="zyglrox.core.gates.WeightedProjector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gates.WeightedProjector</span></code></a>(observable, wires[, …])</p></td>
+<td><p>Projector that projects the state onto an eigenvector of a Hermitian observable</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="zyglrox.core.gates.XX.html#zyglrox.core.gates.XX" title="zyglrox.core.gates.XX"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gates.XX</span></code></a>(wires[, value, conjugate, name])</p></td>
 <td><p>Gate that implements a conditional rotation Ising XX spin interaction.</p></td>

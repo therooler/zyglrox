@@ -102,6 +102,8 @@ Below is a table of the most commonly used quantum gates that are already implem
    gates.CR3
    gates.CZ
    gates.Phase
+   gates.Projector
+   gates.WeightedProjector
    gates.XX
    gates.YY
    gates.ZZ
