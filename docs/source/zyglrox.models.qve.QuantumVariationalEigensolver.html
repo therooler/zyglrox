@@ -222,13 +222,17 @@ Will throw an error if the number of qubits is larger than 18.</p>
 </dl>
 <dl class="method">
 <dt id="zyglrox.models.qve.QuantumVariationalEigensolver.train">
-<code class="sig-name descname">train</code><span class="sig-paren">(</span><em class="sig-param">max_iter=1000</em>, <em class="sig-param">tol=1e-08</em>, <em class="sig-param">fetch_from_graph={}</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#zyglrox.models.qve.QuantumVariationalEigensolver.train" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">train</code><span class="sig-paren">(</span><em class="sig-param">max_iter: int = 1000</em>, <em class="sig-param">tol: float = 1e-08</em>, <em class="sig-param">fetch_from_graph={}</em>, <em class="sig-param">sc_method: str = 'single'</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#zyglrox.models.qve.QuantumVariationalEigensolver.train" title="Permalink to this definition">¶</a></dt>
 <dd><p>Train the quantum variational eigensolver. We minimize the energy <span class="math notranslate nohighlight">\(\langle H \rangle_\theta\)</span> as defined above.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt><em>max_iter (int)</em>:</dt><dd><p>Number of max iterations for the training algorithm.</p>
 </dd>
 <dt><em>tol (float)</em>:</dt><dd><p>Tolerance on the energy. If the absolute difference between iterations is smaller than this value, training stops.</p>
+</dd>
+<dt><em>fetch_from_graph (dict)</em>:</dt><dd><p>Tolerance on the energy. If the absolute difference between iterations is smaller than this value, training stops.</p>
+</dd>
+<dt><em>sc_method (str)</em>:</dt><dd><p>Method for stopping criterion.</p>
 </dd>
 </dl>
 </dd>

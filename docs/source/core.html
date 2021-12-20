@@ -900,6 +900,11 @@ Takes the kwargs <code class="docutils literal notranslate"><span class="pre">po
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="zyglrox.core.circuit_templates.tfi_1d_projective_hva_circuit">
+<code class="sig-prename descclassname">zyglrox.core.circuit_templates.</code><code class="sig-name descname">tfi_1d_projective_hva_circuit</code><span class="sig-paren">(</span><em class="sig-param">N: int</em>, <em class="sig-param">depth: int</em>, <em class="sig-param">projectors</em>, <em class="sig-param">initial_parameters</em>, <em class="sig-param">boundary_condition: str</em>, <em class="sig-param">nmeas: int</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.tfi_1d_projective_hva_circuit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="zyglrox.core.circuit_templates.xy_1d_hva_alt_circuit">
 <code class="sig-prename descclassname">zyglrox.core.circuit_templates.</code><code class="sig-name descname">xy_1d_hva_alt_circuit</code><span class="sig-paren">(</span><em class="sig-param">N: int</em>, <em class="sig-param">depth: int</em>, <em class="sig-param">initial_parameters</em>, <em class="sig-param">boundary_condition</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.xy_1d_hva_alt_circuit" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -917,6 +922,21 @@ Takes the kwargs <code class="docutils literal notranslate"><span class="pre">po
 <dl class="function">
 <dt id="zyglrox.core.circuit_templates.xxz_1d_hva_circuit">
 <code class="sig-prename descclassname">zyglrox.core.circuit_templates.</code><code class="sig-name descname">xxz_1d_hva_circuit</code><span class="sig-paren">(</span><em class="sig-param">N: int</em>, <em class="sig-param">depth: int</em>, <em class="sig-param">initial_parameters</em>, <em class="sig-param">boundary_condition</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.xxz_1d_hva_circuit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.circuit_templates.xxz_1d_projective_hva_circuit">
+<code class="sig-prename descclassname">zyglrox.core.circuit_templates.</code><code class="sig-name descname">xxz_1d_projective_hva_circuit</code><span class="sig-paren">(</span><em class="sig-param">N: int</em>, <em class="sig-param">depth: int</em>, <em class="sig-param">projectors</em>, <em class="sig-param">initial_parameters</em>, <em class="sig-param">boundary_condition: str</em>, <em class="sig-param">nmeas: int</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.xxz_1d_projective_hva_circuit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.circuit_templates.xxz_1d_projective_hva_circuit_multi_measure">
+<code class="sig-prename descclassname">zyglrox.core.circuit_templates.</code><code class="sig-name descname">xxz_1d_projective_hva_circuit_multi_measure</code><span class="sig-paren">(</span><em class="sig-param">N: int</em>, <em class="sig-param">depth: int</em>, <em class="sig-param">projectors</em>, <em class="sig-param">initial_parameters</em>, <em class="sig-param">boundary_condition: str</em>, <em class="sig-param">nmeas: int</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.xxz_1d_projective_hva_circuit_multi_measure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.circuit_templates.xxz_1d_projective_hva_circuit_single_measure">
+<code class="sig-prename descclassname">zyglrox.core.circuit_templates.</code><code class="sig-name descname">xxz_1d_projective_hva_circuit_single_measure</code><span class="sig-paren">(</span><em class="sig-param">N: int</em>, <em class="sig-param">depth: int</em>, <em class="sig-param">projectors</em>, <em class="sig-param">initial_parameters</em>, <em class="sig-param">boundary_condition: str</em>, <em class="sig-param">nmeas: int</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.circuit_templates.xxz_1d_projective_hva_circuit_single_measure" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -1187,6 +1207,31 @@ Takes the kwargs <code class="docutils literal notranslate"><span class="pre">po
 </dd></dl>
 
 <dl class="function">
+<dt id="zyglrox.core.utils.partial_trace_np">
+<code class="sig-prename descclassname">zyglrox.core.utils.</code><code class="sig-name descname">partial_trace_np</code><span class="sig-paren">(</span><em class="sig-param">psi: numpy.ndarray</em>, <em class="sig-param">keep: list</em>, <em class="sig-param">dims: list</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#zyglrox.core.utils.partial_trace_np" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the partial trace of an outer product</p>
+<div class="math notranslate nohighlight">
+\[\rho_a = \text{Tr}_b (| u \rangle \langle u |)\]</div>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt><em>psi (tensor)</em>:</dt><dd><p>Quantum state of shape (None ,2,2,…,2), where None is a batch dimension.</p>
+</dd>
+<dt><em>keep (list)</em>:</dt><dd><p>An array of indices of the spaces to keep after being traced. For instance, if the space is
+A x B x C x D and we want to trace out B and D, keep = [0,2]</p>
+</dd>
+<dt><em>dims (list)</em>:</dt><dd><dl class="simple">
+<dt>An array of the dimensions of each space. For instance, if the space is A x B x C x D,</dt><dd><p>dims = [None, dim_A, dim_B, dim_C, dim_D]. None is used as a batch dimension.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt>Returns (Tensor):</dt><dd><p>Partially traced out matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="zyglrox.core.utils.partial_trace">
 <code class="sig-prename descclassname">zyglrox.core.utils.</code><code class="sig-name descname">partial_trace</code><span class="sig-paren">(</span><em class="sig-param">psi: tensorflow.python.framework.ops.Tensor</em>, <em class="sig-param">keep: list</em>, <em class="sig-param">dims: list</em><span class="sig-paren">)</span> &#x2192; tensorflow.python.framework.ops.Tensor<a class="headerlink" href="#zyglrox.core.utils.partial_trace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the partial trace of an outer product</p>
@@ -1227,6 +1272,28 @@ A x B x C x D and we want to trace out B and D, keep = [0,2]</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.utils.logarithmic_negativity">
+<code class="sig-prename descclassname">zyglrox.core.utils.</code><code class="sig-name descname">logarithmic_negativity</code><span class="sig-paren">(</span><em class="sig-param">rho: Union[tensorflow.python.framework.ops.Tensor, numpy.ndarray]</em><span class="sig-paren">)</span> &#x2192; Union[tensorflow.python.framework.ops.Tensor, numpy.ndarray]<a class="headerlink" href="#zyglrox.core.utils.logarithmic_negativity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the Von Neumann entropy of a reduced density matrix.</p>
+<div class="math notranslate nohighlight">
+\[S(\rho) = -\text{Tr} \rho \log \rho\]</div>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt><em>red_rho (tensor)</em>:</dt><dd><p>Density matrix.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (tensor):</dt><dd><p>Scalar containing the Von Neumann entropy.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="zyglrox.core.utils.get_available_devices">
+<code class="sig-prename descclassname">zyglrox.core.utils.</code><code class="sig-name descname">get_available_devices</code><span class="sig-paren">(</span><em class="sig-param">device_type</em><span class="sig-paren">)</span><a class="headerlink" href="#zyglrox.core.utils.get_available_devices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="function">
 <dt id="zyglrox.core.utils.renyi_entropy">

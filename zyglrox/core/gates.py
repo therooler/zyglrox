@@ -1860,7 +1860,7 @@ class WeightedProjector(Gate):
                 return tf.cond(tf.reduce_all(tf.equal(tf.real(self.op),tf.eye(2, 2, dtype=TF_FLOAT_DTYPE))),
                     lambda: inputs, # if op is identity, return the state
                     lambda: tf.cond(tf.math.greater(tf.real(self.Z1), tf.constant(1e-3, dtype=TF_FLOAT_DTYPE)), # if Z larger than zero, continue
-                                    lambda: tf.cond(tf.math.less(tf.real(self.Z1), tf.constant(0.999, dtype=TF_FLOAT_DTYPE)) , # if Z is smaller than zero, continue
+                                    lambda: tf.cond(tf.math.less(tf.real(self.Z1), tf.constant(0.999, dtype=TF_FLOAT_DTYPE)) , # if Z is smaller than one, continue
                                                     lambda: tf.cond(tf.math.less(tf.real(self.Z1) ** 2,r[0]), # choose state one or two with probability Z^2
                                                     lambda: phi_out_1,
                                                     lambda: phi_out_2), lambda: phi_out_1),
