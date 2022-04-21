@@ -227,6 +227,7 @@ def pauli_y():
 def pauli_z():
     return tf.convert_to_tensor(np.array([[1, 0], [0, -1]]), dtype=TF_COMPLEX_DTYPE)
 
+ps_to_tensor = {'X':pauli_x(), 'Y':pauli_y(), 'Z':pauli_z()}
 
 def hadamard():
     return tf.convert_to_tensor(np.array([[1, 1], [1, -1]]) / np.math.sqrt(2), dtype=TF_COMPLEX_DTYPE)
@@ -1742,6 +1743,82 @@ class ZZ_tri(Gate):
             return tf.transpose(phi, perm=self.inv_perm)
 
 
+def kron_recursion(ops, kron_op=None, i=0):
+    if i == (len(ops) - 1):
+        return kron_op
+    elif not i:
+        kron_op = tf_kron(ops[i], ops[i + 1])
+        return kron_recursion(ops, kron_op, i + 1)
+    else:
+        kron_op = tf_kron(kron_op, ops[i + 1])
+        return kron_recursion(ops, kron_op, i + 1)
+
+
+class PauliRotation(Gate):
+    r"""
+    Gate that implements a 6 qubit rotation Ising XX spin interaction.
+
+    .. math::
+
+        \text{ZZ}(\theta) =  \exp(-i\theta \bigotimes^6\sigma^z/2) = \cos(\theta/2) \: I + i \sin(-\theta/2) \bigotimes^6 \sigma^z
+
+    """
+
+    def __init__(self, paulistring: str, wires: List[int], value: List[float] = None, conjugate=False, name=None,
+                 **kwargs):
+        assert isinstance(wires, list), "'wires' must be a list"
+        assert isinstance(paulistring, str), "'paulistring' must be a string"
+        assert all([ps in ['X','Y','Z'] for ps in paulistring]), f"'paulistring' must consist of X,Y,Z strings, received {paulistring}"
+        assert len(paulistring) == len(wires), "'wires' must have the same length as 'paulistring'"
+        assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
+        if name is None:
+            name = 'PauliRot' + '_'.join([str(s) for s in wires])
+        super(PauliRotation, self).__init__(nparams=1, wires=wires, value=value, name=name, **kwargs)
+        self.conjugate = conjugate
+        self.paulistring = [ps.upper() for ps in paulistring]
+
+    def build(self, input_shape):
+        super(PauliRotation, self).build(input_shape)
+
+        self.Prot = kron_recursion([ps_to_tensor[ps] for ps in self.paulistring])
+        I = identity()
+        self.I = kron_recursion([I]*len(self.paulistring))
+
+    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
+            if inputs.shape.as_list()[0] is not None:
+                inputs = tf.tile(inputs,
+                                 multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
+
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.Prot
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+                            dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
+            return phi
+
+        else:
+            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.Prot
+
+            if self.conjugate:
+                op = tf.transpose(op, conjugate=True)
+            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+
+            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            return tf.transpose(phi, perm=self.inv_perm)
+
+
 class Projector(Gate):
     r"""
     Projector that projects the state onto an eigenvector of a Hermitian observable
@@ -1851,21 +1928,25 @@ class WeightedProjector(Gate):
             self.Z2 = tf.linalg.norm(tf.reshape(phi_out_2, (-1, 1)))
             phi_out_1 = phi_out_1 / self.Z1
             phi_out_2 = phi_out_2 / self.Z2
-            self.cond = tf.reduce_all(tf.equal(tf.real(self.op),tf.eye(2, 2, dtype=TF_FLOAT_DTYPE)))
+            self.cond = tf.reduce_all(tf.equal(tf.real(self.op), tf.eye(2, 2, dtype=TF_FLOAT_DTYPE)))
             r = tf.random.uniform([1])
 
             if probability_only:
                 return self.Z1
             else:
-                return tf.cond(tf.reduce_all(tf.equal(tf.real(self.op),tf.eye(2, 2, dtype=TF_FLOAT_DTYPE))),
-                    lambda: inputs, # if op is identity, return the state
-                    lambda: tf.cond(tf.math.greater(tf.real(self.Z1), tf.constant(1e-3, dtype=TF_FLOAT_DTYPE)), # if Z larger than zero, continue
-                                    lambda: tf.cond(tf.math.less(tf.real(self.Z1), tf.constant(0.999, dtype=TF_FLOAT_DTYPE)) , # if Z is smaller than one, continue
-                                                    lambda: tf.cond(tf.math.less(tf.real(self.Z1) ** 2,r[0]), # choose state one or two with probability Z^2
-                                                    lambda: phi_out_1,
-                                                    lambda: phi_out_2), lambda: phi_out_1),
-                                    lambda: phi_out_2)) # else, return 1-Z^2 state
-
+                return tf.cond(tf.reduce_all(tf.equal(tf.real(self.op), tf.eye(2, 2, dtype=TF_FLOAT_DTYPE))),
+                               lambda: inputs,  # if op is identity, return the state
+                               lambda: tf.cond(
+                                   tf.math.greater(tf.real(self.Z1), tf.constant(1e-3, dtype=TF_FLOAT_DTYPE)),
+                                   # if Z larger than zero, continue
+                                   lambda: tf.cond(
+                                       tf.math.less(tf.real(self.Z1), tf.constant(0.999, dtype=TF_FLOAT_DTYPE)),
+                                       # if Z is smaller than one, continue
+                                       lambda: tf.cond(tf.math.less(tf.real(self.Z1) ** 2, r[0]),
+                                                       # choose state one or two with probability Z^2
+                                                       lambda: phi_out_1,
+                                                       lambda: phi_out_2), lambda: phi_out_1),
+                                   lambda: phi_out_2))  # else, return 1-Z^2 state
 
     def get_evals_and_projectors(self, O):
         """

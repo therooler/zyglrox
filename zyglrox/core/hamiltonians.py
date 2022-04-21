@@ -272,6 +272,8 @@ class Hamiltonian(object):
         degeneracy = 0
         while np.allclose(E[degeneracy], E[degeneracy + 1]):
             degeneracy += 1
+            if degeneracy==len(E)-1:
+                break
         if degeneracy > 0:
             print('The ground state is {}-fold degenerate'.format(degeneracy + 1))
         else:
@@ -646,6 +648,72 @@ class HeisenbergXXZ(Hamiltonian):
         interactions = {**interactions, **additional_interactions}
         model_parameters = {**model_parameters, **additional_model_parameters}
         super(HeisenbergXXZ, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
+
+
+
+class MBL(Hamiltonian):
+
+    def __init__(self, topology: Union[dict, str], w: float=0.5, seed=None,**kwargs):
+        r"""
+        The XXZ Heisenberg model is given by the Hamiltonian
+
+        .. math::
+
+            H = \sum_{<i,j>}^N \sigma_{i}^{x}\sigma_{j}^{x} + \sigma_{i}^{y}\sigma_{j}^{y}
+            + \Delta \sigma_{i}^{z}\sigma_{j}^{z}
+
+        with :math:`N` the number of spins. This function takes kwargs ``L`` and ``M`` that can be used to specify the
+        size of the standard topologies ['line', 'rect_lattice'].
+
+        Args:
+            *topology (dict, str)*:
+                A dict with nodes as keys and a list of edges as values or a string defining a standard topology
+
+            *delta (float)*:
+                The order parameter.
+
+            *\*\*kwargs*:
+                Additional arguments.
+
+        Returns (inplace):
+            None
+
+        """
+        assert isinstance(topology,
+                          (dict, str)), "Topology must be a string or a dict, received object of type {}".format(
+            type(topology))
+
+        if isinstance(topology, str):
+            assert 'L' in kwargs.keys(), "If topology is a string, the lattice or line size 'L' must be supplied as a kwarg"
+            L = kwargs.pop('L')
+            topology = standard_topologies(L, topology=topology, **kwargs)
+        topology = remove_double_counting(topology)
+
+        f_or_af = kwargs.pop('f_or_af', 'f')
+        all_edges = {tuple(sorted(x)) for y in topology.values() for x in y}
+        self.nsites = max(all_edges, key=itemgetter(1))[1] + 1
+        name = kwargs.pop('name', "MBL_{}qb_w_{:1.2f}_seed_{}".format(self.nsites, w, seed))
+        if f_or_af == 'f':
+            model_parameters = {'xx': -0.25, 'yy': -0.25, 'zz': -0.25}
+        else:
+            model_parameters = {'xx': 0.25, 'yy': 0.25, 'zz': 0.25}
+        if 'boundary_conditions' in kwargs.keys():
+            name = name + '_' + kwargs['boundary_conditions'] + '_' + f_or_af
+        else:
+            name = name + '_' + f_or_af
+
+        # Heisenberg XXZ model
+        sites = [(s,) for s in range(self.nsites)]
+        mag_field = magnetic_field_interaction(topology)
+
+        interactions = {'xx': topology, 'yy': topology, 'zz': topology,'z': mag_field}
+        model_parameters['z'] = dict(zip(sites, np.random.uniform(-w / 2, w / 2,len(sites))))
+
+        additional_interactions = kwargs.pop("additional_interactions", {})
+        additional_model_parameters = kwargs.pop("additional_model_parameters", {})
+        interactions = {**interactions, **additional_interactions}
+        model_parameters = {**model_parameters, **additional_model_parameters}
+        super(MBL, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
 
 
 class HaldaneShastry(Hamiltonian):
