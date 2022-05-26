@@ -78,9 +78,9 @@ class Hamiltonian(object):
         assert isinstance(topology, dict), "topology must be a dictionary, received {}".format(
             type(topology))
         assert all(isinstance(x, int) for x in topology.keys()), "All keys of the topology dict must be integers"
-        assert set(topology.keys()) == set(range(max(
-            topology.keys()) + 1)), "Topology must be a list of consecutive integers starting at 0, received {}".format(
-            topology.keys())
+        # assert set(topology.keys()) == set(range(max(
+        #     topology.keys()) + 1)), "Topology must be a list of consecutive integers starting at 0, received {}".format(
+        #     topology.keys())
         assert all(isinstance(x, list) for y in topology.values() for x in
                    y), "All values of the topology dict must be list of lists"
         assert all(
