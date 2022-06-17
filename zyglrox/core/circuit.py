@@ -335,6 +335,12 @@ class QuantumCircuit:
             layers_as_str.append(','.join([i.__str__() for i in self.gates_per_layers[l]]).split(','))
         draw_circuit(layers_as_str, self.nqubits)
 
+    def get_full_unitary(self):
+        U =  self.gates[0].get_full_unitary(self.nqubits)
+        for gate in self.gates[1:]:
+            U = U @ gate.get_full_unitary(self.nqubits)
+
+        return U
 
 class CircuitLayer(Layer):
     """
@@ -439,3 +445,27 @@ def projector_circuit_template(N: int, projectors: List[np.ndarray], circuitargs
     Z = tf.reduce_prod(tf.stack([l.Z for l in qc.circuit.layers if l._is_projector]))
 
     return qc, Z
+
+
+if __name__ == '__main__':
+    from zyglrox.core.gates import ZZ, RX
+    N = 3
+    num_layers = 3
+    gates = []
+    parameters_zz = tf.Variable(tf.ones(shape=(N, num_layers), dtype=tf.float32) * np.pi)
+    parameters_x = tf.Variable(tf.ones(shape=(N, num_layers), dtype=tf.float32) * np.pi)
+
+    for l in range(num_layers):
+        count = 0
+        for j in range(0, N - 1, 2):
+            gates.append(ZZ(wires=[j, j + 1], value=parameters_zz[count, l]))
+            count += 1
+
+        for j in range(1, N - 1, 2):
+            gates.append(ZZ(wires=[j, j + 1], value=parameters_zz[count, l]))
+            count += 1
+        gates.extend([RX(wires=[i, ], value=parameters_x[i, l]) for i in range(N)])
+
+    circuit = QuantumCircuit(N, gates)
+    circuit.execute()
+    circuit.get_full_unitary()

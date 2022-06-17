@@ -207,6 +207,33 @@ class Gate(Layer):
 
         raise NotImplementedError
 
+    def get_full_unitary(self, N):
+        """
+        Takes the unitary and promotes it to an operator on the full unitary space C^{2^n x 2^n}.
+
+        Returns:
+            Numpy array of size 2^n x 2^n corresponding to the full unitary.
+        """
+        assert self.built, '`Gate` must be build first, call execute() on the QuantumCircuit'
+        U = tf.reshape(tf.eye(2**N, dtype=TF_COMPLEX_DTYPE),[2]*2*N)
+        op = tf.reshape(self.op, [2] * 2 * len(self.wires))
+        einsum_indices_operator = list(range(2 * len(self.wires)))
+        einsum_indices_final_operator = list(range(2 * len(self.wires), 2 * N + 2 * len(self.wires)))
+
+        for i, w in enumerate(self.wires):
+            einsum_indices_final_operator[w] = einsum_indices_operator[i + len(self.wires)]
+        einsum_indices_operator_out = copy.copy(einsum_indices_final_operator)
+        for i, w in enumerate(self.wires):
+            einsum_indices_operator_out[w] = einsum_indices_operator[i]
+
+        einsum_indices_operator = [self.ALPHABET[s] for s in einsum_indices_operator]
+        einsum_indices_final_operator = [self.ALPHABET[s] for s in einsum_indices_final_operator]
+        einsum_indices_operator_out = [self.ALPHABET[s] for s in einsum_indices_operator_out]
+        einsum_contraction = ''.join(einsum_indices_operator) + ',' + ''.join(einsum_indices_final_operator) + '->' + ''.join(
+            einsum_indices_operator_out)
+        final_operator = tf.linalg.einsum(einsum_contraction, op, U)
+        return tf.reshape(final_operator, (2 ** N, 2 ** N))
+
 
 # ============
 #  Fixed gates
@@ -227,7 +254,9 @@ def pauli_y():
 def pauli_z():
     return tf.convert_to_tensor(np.array([[1, 0], [0, -1]]), dtype=TF_COMPLEX_DTYPE)
 
-ps_to_tensor = {'X':pauli_x(), 'Y':pauli_y(), 'Z':pauli_z()}
+
+ps_to_tensor = {'X': pauli_x(), 'Y': pauli_y(), 'Z': pauli_z()}
+
 
 def hadamard():
     return tf.convert_to_tensor(np.array([[1, 1], [1, -1]]) / np.math.sqrt(2), dtype=TF_COMPLEX_DTYPE)
@@ -610,6 +639,11 @@ class Phase(Gate):
 
         self.n_0 = tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE)
         self.n_1 = tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE)
+        if (self._batch_params):
+
+            self.op = self.n_0 + tf.math.exp(tf.complex(0., self.theta)) * self.n_1
+        else:
+            self.op = self.n_0 + tf.math.exp(tf.complex(0., self.theta[0])) * self.n_1
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -620,22 +654,19 @@ class Phase(Gate):
             if inputs.shape.as_list()[0] is not None:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            op = self.n_0 + tf.math.exp(tf.complex(0., self.theta)) * self.n_1
-
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
 
-            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(self.op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
             return phi
 
         else:
-            op = self.n_0 + tf.math.exp(tf.complex(0., self.theta[0])) * self.n_1
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
 
-            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            phi = tensordot(self.op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
 
 
@@ -664,6 +695,14 @@ class RX(Gate):
 
         self.I = identity()
         self.PX = pauli_x()
+        if (self._batch_params):
+            self.op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PX
+        else:
+            self.op = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[0] / 2)) * self.PX
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -674,25 +713,20 @@ class RX(Gate):
             # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
             if inputs.shape.as_list()[0] == 1:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
-            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PX
+
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
             self.tdot_axes[1] = [w - 1 for w in self.tdot_axes[1]]
-            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(self.op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
             return phi
 
         else:
-            op = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0] / 2)) * self.PX
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
 
-            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            phi = tensordot(self.op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
 
 
@@ -721,6 +755,14 @@ class RY(Gate):
 
         self.I = identity()
         self.PY = pauli_y()
+        if (self._batch_params):
+            self.op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PY
+        else:
+            self.op = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[0] / 2)) * self.PY
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -731,26 +773,19 @@ class RY(Gate):
             if inputs.shape.as_list()[0] == 1:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PY
-
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
             self.tdot_axes[1] = [w - 1 for w in self.tdot_axes[1]]
-            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(self.op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
             return phi
 
         else:
-            op = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.cast(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0] / 2)) * self.PY
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
 
-            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            phi = tensordot(self.op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
 
 
@@ -779,6 +814,15 @@ class RZ(Gate):
 
         self.I = identity()
         self.PZ = pauli_z()
+        if (self._batch_params):
+
+            self.op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PZ
+        else:
+            self.op = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[0] / 2)) * self.PZ
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -788,27 +832,21 @@ class RZ(Gate):
             # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
             if inputs.shape.as_list()[0] == 1:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
-            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PZ
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
             self.tdot_axes[1] = [w - 1 for w in self.tdot_axes[1]]
-            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(self.op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
 
             return phi
 
         else:
-            op = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0] / 2)) * self.PZ
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
 
-            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            phi = tensordot(self.op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
 
 
@@ -837,6 +875,27 @@ class R3(Gate):
         self.I = identity()
         self.PY = pauli_y()
         self.PZ = pauli_z()
+        if (self._batch_params):
+            rz1 = tf.complex(tf.math.cos(self.theta[:, 0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[:, 0] / 2)) * self.PZ
+            ry = tf.complex(tf.math.cos(self.theta[:, 1] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[:, 1] / 2)) * self.PY
+            rz2 = tf.complex(tf.math.cos(self.theta[:, 2] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[:, 2] / 2)) * self.PZ
+        else:
+            rz1 = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[0] / 2)) * self.PZ
+            ry = tf.complex(tf.math.cos(self.theta[1] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[1] / 2)) * self.PY
+            rz2 = tf.complex(tf.math.cos(self.theta[2] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[2] / 2)) * self.PZ
+        self.op = rz1 @ (ry @ rz2)
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -847,40 +906,19 @@ class R3(Gate):
             if inputs.shape.as_list()[0] is not None:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            rz1 = tf.complex(tf.math.cos(self.theta[:, 0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[:, 0] / 2)) * self.PZ
-            ry = tf.complex(tf.math.cos(self.theta[:, 1] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[:, 1] / 2)) * self.PY
-            rz2 = tf.complex(tf.math.cos(self.theta[:, 2] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[:, 2] / 2)) * self.PZ
-            op = rz1 @ (ry @ rz2)
-
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
 
-            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(self.op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
             return phi
 
         else:
-            rz1 = tf.complex(tf.math.cos(self.theta[0, 0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0, 0] / 2)) * self.PZ
-            ry = tf.complex(tf.math.cos(self.theta[0, 1] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0, 1] / 2)) * self.PY
-            rz2 = tf.complex(tf.math.cos(self.theta[0, 2] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0, 2] / 2)) * self.PZ
-            op = rz1 @ (ry @ rz2)
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
+                self.op = tf.transpose(self.op, conjugate=True)
 
-            phi = tensordot(op, inputs, axes=self.tdot_axes)
+            phi = tensordot(self.op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
 
 
@@ -909,6 +947,17 @@ class CRX(Gate):
 
         self.I = identity()
         self.PX = pauli_x()
+        if (self._batch_params):
+
+            rx = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PX
+        else:
+            rx = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[0] / 2)) * self.PX
+        self.op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
+            tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), rx)
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -919,30 +968,19 @@ class CRX(Gate):
             if inputs.shape.as_list()[0] is not None:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            rx = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PX
-            op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
-                tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), rx)
-
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[-1] + [2] * self.nqubits * 2)
 
             phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
             return phi
 
         else:
-            rx = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0] / 2)) * self.PX
-            op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
-                tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), rx)
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[2] * self.nqubits * 2)
 
             phi = tensordot(op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
@@ -973,6 +1011,17 @@ class CRY(Gate):
 
         self.I = identity()
         self.PY = pauli_y()
+        if (self._batch_params):
+
+            ry = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PY
+        else:
+            ry = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[0] / 2)) * self.PY
+        self.op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
+            tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), ry)
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -983,30 +1032,19 @@ class CRY(Gate):
             if inputs.shape.as_list()[0] is not None:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            ry = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PY
-            op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
-                tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), ry)
-
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[-1] + [2] * self.nqubits * 2)
 
             phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
             return phi
 
         else:
-            ry = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0] / 2)) * self.PY
-            op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
-                tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), ry)
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[2] * self.nqubits * 2)
 
             phi = tensordot(op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
@@ -1037,6 +1075,17 @@ class CRZ(Gate):
 
         self.I = identity()
         self.PZ = pauli_z()
+        if (self._batch_params):
+
+            rz = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PZ
+        else:
+            rz = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[0] / 2)) * self.PZ
+        self.op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
+            tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), rz)
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -1047,30 +1096,19 @@ class CRZ(Gate):
             if inputs.shape.as_list()[0] is not None:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            rz = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PZ
-            op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
-                tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), rz)
-
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[-1] + [2] * self.nqubits * 2)
 
             phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
             return phi
 
         else:
-            rz = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0] / 2)) * self.PZ
-            op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
-                tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), rz)
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[2] * self.nqubits * 2)
 
             phi = tensordot(op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
@@ -1102,37 +1140,18 @@ class CR3(Gate):
         self.I = identity()
         self.PY = pauli_y()
         self.PZ = pauli_z()
-
-    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
-        """
-        Gate Logic
-        """
         if (self._batch_params):
-            # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
-            if inputs.shape.as_list()[0] is not None:
-                inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            rz1 = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+            rz1 = tf.complex(tf.math.cos(self.theta[:, 0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
                 tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[0] / 2)) * self.PZ
-            ry = tf.complex(tf.math.cos(self.theta[1] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                    -self.theta[:, 0] / 2)) * self.PZ
+            ry = tf.complex(tf.math.cos(self.theta[:, 1] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
                 tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[1] / 2)) * self.PY
-            rz2 = tf.complex(tf.math.cos(self.theta[2] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                    -self.theta[:, 1] / 2)) * self.PY
+            rz2 = tf.complex(tf.math.cos(self.theta[:, 2] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
                 tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta[2] / 2)) * self.PZ
+                    -self.theta[:, 2] / 2)) * self.PZ
             r3 = rz1 @ (ry @ rz2)
-            op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
-                tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), r3)
-
-            if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
-
-            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
-                            dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
-            return phi
-
         else:
             rz1 = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
                 tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
@@ -1144,12 +1163,31 @@ class CR3(Gate):
                 tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
                     -self.theta[2] / 2)) * self.PZ
             r3 = rz1 @ (ry @ rz2)
-            op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
-                tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), r3)
+        self.op = tf_kron(tf.convert_to_tensor(np.array([[1, 0], [0, 0]]), dtype=TF_COMPLEX_DTYPE), self.I) + tf_kron(
+            tf.convert_to_tensor(np.array([[0, 0], [0, 1]]), dtype=TF_COMPLEX_DTYPE), r3)
+
+    def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
+        """
+        Gate Logic
+        """
+        if (self._batch_params):
+            # if we have batches of parameters and inputs does not already have a batch dim, we tile to give it one
+            if inputs.shape.as_list()[0] is not None:
+                inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[-1] + [2] * self.nqubits * 2)
+
+            phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
+                            dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
+            return phi
+
+        else:
+
+            if self.conjugate:
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[2] * self.nqubits * 2)
 
             phi = tensordot(op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
@@ -1179,6 +1217,15 @@ class XX(Gate):
 
         self.I = tf_kron(identity(), identity())
         self.PX = tf_kron(pauli_x(), pauli_x())
+        if (self._batch_params):
+
+            self.op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PX
+        else:
+            self.op = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[0] / 2)) * self.PX
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -1189,26 +1236,19 @@ class XX(Gate):
             if inputs.shape.as_list()[0] is not None:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PX
-
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[-1] + [2] * self.nqubits * 2)
 
             phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
             return phi
 
         else:
-            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PX
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[2] * self.nqubits * 2)
 
             phi = tensordot(op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
@@ -1238,6 +1278,15 @@ class YY(Gate):
 
         self.I = tf_kron(identity(), identity())
         self.PY = tf_kron(pauli_y(), pauli_y())
+        if (self._batch_params):
+
+            self.op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta / 2)) * self.PY
+        else:
+            self.op = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
+                    -self.theta[0] / 2)) * self.PY
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -1248,26 +1297,19 @@ class YY(Gate):
             if inputs.shape.as_list()[0] is not None:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PY
-
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[-1] + [2] * self.nqubits * 2)
 
             phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
             return phi
 
         else:
-            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PY
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[2] * self.nqubits * 2)
 
             phi = tensordot(op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
@@ -1297,6 +1339,13 @@ class ZZ(Gate):
 
         self.I = tf_kron(identity(), identity())
         self.PZ = tf_kron(pauli_z(), pauli_z())
+        if (self._batch_params):
+
+            self.op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(-self.theta / 2)) * self.PZ
+        else:
+            self.op = tf.complex(tf.math.cos(self.theta[0] / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
+                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(-self.theta[0] / 2)) * self.PZ
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -1307,26 +1356,19 @@ class ZZ(Gate):
             if inputs.shape.as_list()[0] is not None:
                 inputs = tf.tile(inputs, multiples=[tf.shape(self.theta)[0], *[1 for _ in range(self.total_qubits)]])
 
-            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PZ
-
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[-1] + [2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[-1] + [2] * self.nqubits * 2)
             phi = tf.map_fn(lambda x: tensordot(x[0], x[1], axes=self.tdot_axes), elems=(op, inputs),
                             dtype=(TF_COMPLEX_DTYPE), parallel_iterations=self._batch_size)
 
             return phi
 
         else:
-            op = tf.complex(tf.math.cos(self.theta / 2), tf.constant(0., TF_FLOAT_DTYPE)) * self.I + tf.complex(
-                tf.constant(0., TF_FLOAT_DTYPE), tf.math.sin(
-                    -self.theta / 2)) * self.PZ
 
             if self.conjugate:
-                op = tf.transpose(op, conjugate=True)
-            op = tf.reshape(op, shape=[2] * self.nqubits * 2)
+                self.op = tf.transpose(self.op, conjugate=True)
+            op = tf.reshape(self.op, shape=[2] * self.nqubits * 2)
 
             phi = tensordot(op, inputs, axes=self.tdot_axes)
             return tf.transpose(phi, perm=self.inv_perm)
@@ -1768,7 +1810,8 @@ class PauliRotation(Gate):
                  **kwargs):
         assert isinstance(wires, list), "'wires' must be a list"
         assert isinstance(paulistring, str), "'paulistring' must be a string"
-        assert all([ps in ['X','Y','Z'] for ps in paulistring]), f"'paulistring' must consist of X,Y,Z strings, received {paulistring}"
+        assert all([ps in ['X', 'Y', 'Z'] for ps in
+                    paulistring]), f"'paulistring' must consist of X,Y,Z strings, received {paulistring}"
         assert len(paulistring) == len(wires), "'wires' must have the same length as 'paulistring'"
         assert len(np.unique(wires)) == len(wires), "'wires' must be a list of unique integers"
         if name is None:
@@ -1782,7 +1825,7 @@ class PauliRotation(Gate):
 
         self.Prot = kron_recursion([ps_to_tensor[ps] for ps in self.paulistring])
         I = identity()
-        self.I = kron_recursion([I]*len(self.paulistring))
+        self.I = kron_recursion([I] * len(self.paulistring))
 
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """
@@ -1891,7 +1934,8 @@ class WeightedProjector(Gate):
             name = 'Projector_' + '_'.join([str(s) for s in wires])
         assert len(wires) == 1, "Gate should operate on 1 qubits, found {}".format(wires)
         assert isinstance(observable,
-                          (np.ndarray, tf.Tensor)), f"'pi' must be of type np.ndarray or tf.Tensor, received {type(pi)}"
+                          (np.ndarray,
+                           tf.Tensor)), f"'pi' must be of type np.ndarray or tf.Tensor, received {type(observable)}"
 
         assert observable.shape == (2, 2), f"pi must have shape [2,2], received {observable.shape}"
         if isinstance(observable, np.ndarray):

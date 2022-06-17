@@ -1138,7 +1138,44 @@ class J1J2(Hamiltonian):
         # name = kwargs.pop('name', "XYZ_{}qb_delta_{}_J".format(self.nsites, delta, J))
         # super(J1J2, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
 
-        raise NotImplementedError
+        # raise NotImplementedError
+
+        assert isinstance(topology, dict), "Topology must be a string or a dict, received object of type {}".format(type(topology))
+
+        topology = remove_double_counting(topology)
+        all_edges = {tuple(sorted(x)) for y in topology.values() for x in y}
+        self.nsites = max(all_edges, key=itemgetter(1))[1] + 1
+        name = kwargs.pop('name',
+                          "J1J2_{}qb_J1_{:1.2f}_J2_{:1.2f}".format(self.nsites, J1, J2))
+
+        if 'boundary_conditions' in kwargs.keys():
+            name = name + '_' + kwargs['boundary_conditions']
+        self.boundary_conditions = kwargs.pop('boundary_conditions', None)
+
+        print(name)
+
+        interactions = {'xx': topology, 'yy': topology, 'zz': topology}
+        links = [tuple(y) for x in topology.values() for y in x]
+        links_J1 = [x for x in links if (np.abs(x[1] - x[0]) % 2) != 0]
+        links_J2 = [x for x in links if (np.abs(x[1] - x[0]) % 2)  == 0]
+        params_xx_J1 = dict(zip(links_J1, [J1 for _ in range(len(links_J1))]))
+        params_xx_J2 = dict(zip(links_J2, [J2 for _ in range(len(links_J2))]))
+        params_xx = {**params_xx_J1, **params_xx_J2}
+        params_yy_J1 = dict(zip(links_J1, [J1 for _ in range(len(links_J1))]))
+        params_yy_J2 = dict(zip(links_J2, [J2 for _ in range(len(links_J2))]))
+        params_yy = {**params_yy_J1, **params_yy_J2}
+        params_zz_J1 = dict(zip(links_J1, [J1 for _ in range(len(links_J1))]))
+        params_zz_J2 = dict(zip(links_J2, [J2 for _ in range(len(links_J2))]))
+        params_zz = {**params_zz_J1, **params_zz_J2}
+        model_parameters = {'xx': params_xx, 'yy': params_yy, 'zz': params_zz}
+
+        additional_interactions = kwargs.pop("additional_interactions", {})
+        additional_model_parameters = kwargs.pop("additional_model_parameters", {})
+        interactions = {**interactions, **additional_interactions}
+        model_parameters = {**model_parameters, **additional_model_parameters}
+
+        super(J1J2, self).__init__(topology, interactions, model_parameters, name=name, **kwargs)
+
 
 
 def remove_double_counting(g: dict) -> dict:
