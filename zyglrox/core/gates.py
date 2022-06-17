@@ -221,10 +221,10 @@ class Gate(Layer):
         einsum_indices_final_operator = list(range(2 * len(self.wires), 2 * N + 2 * len(self.wires)))
 
         for i, w in enumerate(self.wires):
-            einsum_indices_final_operator[w] = einsum_indices_operator[i + len(self.wires)]
+            einsum_indices_final_operator[w-1] = einsum_indices_operator[i + len(self.wires)]
         einsum_indices_operator_out = copy.copy(einsum_indices_final_operator)
         for i, w in enumerate(self.wires):
-            einsum_indices_operator_out[w] = einsum_indices_operator[i]
+            einsum_indices_operator_out[w-1] = einsum_indices_operator[i]
 
         einsum_indices_operator = [self.ALPHABET[s] for s in einsum_indices_operator]
         einsum_indices_final_operator = [self.ALPHABET[s] for s in einsum_indices_final_operator]
